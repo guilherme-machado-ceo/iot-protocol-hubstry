@@ -1,15 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { Play, Pause, Wifi, Radio, Bluetooth, Shield, Zap } from 'lucide-react';
-import HarmonicVisualizer from '@/components/HarmonicVisualizer';
-import DeviceSimulator from '@/components/DeviceSimulator';
-import ProtocolMetrics from '@/components/ProtocolMetrics';
+
+// Dynamic imports to prevent hydration issues
+const HarmonicVisualizer = dynamic(() => import('@/components/HarmonicVisualizer'), { ssr: false });
+const DeviceSimulator = dynamic(() => import('@/components/DeviceSimulator'), { ssr: false });
+const ProtocolMetrics = dynamic(() => import('@/components/ProtocolMetrics'), { ssr: false });
 
 export default function Home() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [activeChannels, setActiveChannels] = useState<number[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isSimulating) {
@@ -120,11 +128,13 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <HarmonicVisualizer 
-              fundamentalFreq={1000}
-              activeChannels={activeChannels}
-              isSimulating={isSimulating}
-            />
+            {mounted && (
+              <HarmonicVisualizer 
+                fundamentalFreq={1000}
+                activeChannels={activeChannels}
+                isSimulating={isSimulating}
+              />
+            )}
           </motion.div>
 
           {/* Device Simulator */}
@@ -133,11 +143,13 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <DeviceSimulator 
-              fundamentalFreq={1000}
-              onChannelActivity={(channels) => setActiveChannels(channels)}
-              isSimulating={isSimulating}
-            />
+            {mounted && (
+              <DeviceSimulator 
+                fundamentalFreq={1000}
+                onChannelActivity={(channels) => setActiveChannels(channels)}
+                isSimulating={isSimulating}
+              />
+            )}
           </motion.div>
         </div>
 
@@ -148,10 +160,12 @@ export default function Home() {
           transition={{ delay: 0.6 }}
           className="mt-8"
         >
-          <ProtocolMetrics 
-            activeChannels={activeChannels}
-            isSimulating={isSimulating}
-          />
+          {mounted && (
+            <ProtocolMetrics 
+              activeChannels={activeChannels}
+              isSimulating={isSimulating}
+            />
+          )}
         </motion.div>
       </main>
 
