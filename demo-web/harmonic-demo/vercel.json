@@ -1,12 +1,6 @@
 {
-  "name": "harmonic-iot-protocol-demo",
+  "name": "harmonic-iot-demo",
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
@@ -15,10 +9,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "src/app/**/*.tsx": {
-      "maxDuration": 10
-    }
   }
 }
