@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Activity } from 'lucide-react';
 
 interface HarmonicVisualizerProps {
   fundamentalFreq: number;
@@ -67,7 +68,7 @@ export default function HarmonicVisualizer({ fundamentalFreq, activeChannels, is
     }
 
     // Draw harmonic frequencies
-    harmonicData.forEach((harmonic, index) => {
+    harmonicData.forEach((harmonic) => {
       const x = (harmonic.channel / 20) * width;
       const barHeight = harmonic.amplitude * (height * 0.8);
       const y = height - barHeight;

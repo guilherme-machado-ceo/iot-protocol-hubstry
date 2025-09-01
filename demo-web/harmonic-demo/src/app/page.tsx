@@ -9,7 +9,6 @@ import ProtocolMetrics from '@/components/ProtocolMetrics';
 
 export default function Home() {
   const [isSimulating, setIsSimulating] = useState(false);
-  const [fundamentalFreq, setFundamentalFreq] = useState(1000);
   const [activeChannels, setActiveChannels] = useState<number[]>([]);
 
   useEffect(() => {
@@ -51,7 +50,7 @@ export default function Home() {
               className="flex items-center space-x-4"
             >
               <div className="text-right">
-                <p className="text-white font-semibold">f₀ = {fundamentalFreq} Hz</p>
+                <p className="text-white font-semibold">f₀ = 1000 Hz</p>
                 <p className="text-purple-300 text-sm">Fundamental Frequency</p>
               </div>
               <button
@@ -122,7 +121,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
           >
             <HarmonicVisualizer 
-              fundamentalFreq={fundamentalFreq}
+              fundamentalFreq={1000}
               activeChannels={activeChannels}
               isSimulating={isSimulating}
             />
@@ -135,7 +134,7 @@ export default function Home() {
             transition={{ delay: 0.4 }}
           >
             <DeviceSimulator 
-              fundamentalFreq={fundamentalFreq}
+              fundamentalFreq={1000}
               onChannelActivity={(channels) => setActiveChannels(channels)}
               isSimulating={isSimulating}
             />
