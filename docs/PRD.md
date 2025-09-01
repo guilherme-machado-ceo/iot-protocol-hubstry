@@ -32,15 +32,15 @@ To create a mathematically robust, highly secure, and infinitely scalable commun
 
 ```mermaid
 graph TD
-    A[1. Master Node Establishes f₀] --> B(2. System Config: Map Hn to Functions <br> e.g., H2=Sensor, H3=Actuator);
-    B --> C{3. Device Transmission <br> Sensor modulates data onto 2f₀};
-    B --> D{3. Device Transmission <br> Actuator listens on 3f₀};
-    C --> E[4. Gateway Receives Composite Signal <br> (2f₀ + other harmonics)];
-    D --> E;
-    E --> F[5. Signal Processing (FFT) <br> Gateway separates composite signal into individual harmonic streams];
-    F --> G[6. Data Decoding <br> Gateway decodes data from H2];
-    F --> H[6. Data Transmission <br> Gateway sends command on H3];
-    G --> I{7. Omnichannel Routing <br> Route decoded sensor data from LoRa (H2) to a Wi-Fi backend (H10)};
+    A[1. Master Node Establishes f₀] --> B[2. System Config: Map Hn to Functions<br/>e.g., H2=Sensor, H3=Actuator]
+    B --> C[3. Device Transmission<br/>Sensor modulates data onto 2f₀]
+    B --> D[3. Device Transmission<br/>Actuator listens on 3f₀]
+    C --> E[4. Gateway Receives Composite Signal<br/>2f₀ + other harmonics]
+    D --> E
+    E --> F[5. Signal Processing FFT<br/>Gateway separates composite signal into individual harmonic streams]
+    F --> G[6. Data Decoding<br/>Gateway decodes data from H2]
+    F --> H[6. Data Transmission<br/>Gateway sends command on H3]
+    G --> I[7. Omnichannel Routing<br/>Route decoded sensor data from LoRa H2 to Wi-Fi backend H10]
 ```
 
 ## 5. Functional Requirements
