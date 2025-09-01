@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, Wifi, Radio, Bluetooth, Shield, Activity, Zap } from 'lucide-react';
+import { Play, Pause, Wifi, Radio, Bluetooth, Shield, Zap } from 'lucide-react';
 import HarmonicVisualizer from '@/components/HarmonicVisualizer';
 import DeviceSimulator from '@/components/DeviceSimulator';
 import ProtocolMetrics from '@/components/ProtocolMetrics';
@@ -36,7 +36,7 @@ export default function Home() {
               className="flex items-center space-x-3"
             >
               <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Activity className="w-6 h-6 text-white" />
+                <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Harmonic IoT Protocol</h1>
