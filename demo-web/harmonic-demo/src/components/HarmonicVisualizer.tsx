@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity } from 'lucide-react';
 
 interface HarmonicVisualizerProps {
   fundamentalFreq: number;
@@ -136,7 +135,7 @@ export default function HarmonicVisualizer({ fundamentalFreq, activeChannels, is
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 >
-                  <Activity className="w-8 h-8 text-purple-400" />
+                  <div className="w-8 h-8 bg-purple-400 rounded-full animate-pulse"></div>
                 </motion.div>
               </div>
               <p className="text-white font-medium">Start simulation to see harmonic activity</p>
