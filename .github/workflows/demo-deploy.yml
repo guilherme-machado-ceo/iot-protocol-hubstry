@@ -1,0 +1,45 @@
+name: Demo Deployment Check
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'demo-web/**'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'demo-web/**'
+
+jobs:
+  test-demo:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: demo-web/harmonic-demo/package-lock.json
+        
+    - name: Install Dependencies
+      run: npm install --legacy-peer-deps
+      working-directory: demo-web/harmonic-demo
+      
+    - name: Build Demo
+      run: npm run build
+      working-directory: demo-web/harmonic-demo
+      
+    - name: Lint Code
+      run: npm run lint
+      working-directory: demo-web/harmonic-demo
+      continue-on-error: true
+      
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: demo-build
+        path: demo-web/harmonic-demo/.next
+        retention-days: 3
