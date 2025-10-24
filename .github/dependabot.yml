@@ -1,0 +1,78 @@
+version: 2
+updates:
+  # Enable version updates for npm (if package.json exists)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "guilherme-machado-ceo"
+    assignees:
+      - "guilherme-machado-ceo"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "security"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "guilherme-machado-ceo"
+    assignees:
+      - "guilherme-machado-ceo"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "security"
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "guilherme-machado-ceo"
+    assignees:
+      - "guilherme-machado-ceo"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "docker"
+      - "security"
+
+  # Enable version updates for Python (SDK)
+  - package-ecosystem: "pip"
+    directory: "/sdk/raspberry-pi"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "guilherme-machado-ceo"
+    assignees:
+      - "guilherme-machado-ceo"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "python"
+      - "sdk"
+      - "security"

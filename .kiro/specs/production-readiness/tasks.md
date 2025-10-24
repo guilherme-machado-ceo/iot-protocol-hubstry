@@ -1,6 +1,8 @@
 # Plano de Implementação - Production Readiness
 
-- [ ] 1. Implementar segurança crítica e criptografia
+- [x] 1. Implementar segurança crítica e criptografia
+
+
   - Substituir senhas em texto plano por Argon2id hashing
   - Implementar JWT com expiração de 15 minutos e refresh tokens
   - Configurar HTTPS obrigatório com certificados Let's Encrypt
