@@ -31,6 +31,8 @@ This roadmap outlines the planned development and evolution of the Harmonic IoT 
 - [x] Comprehensive test cases
 - [x] CC BY-NC-SA 4.0 licensing
 - [x] GitHub templates and workflows
+- [x] **[Interactive Web Simulator](https://hubstry-harmonic-protocol.vercel.app/)** - Live demonstration platform
+- [x] Interactive web simulator deployed on Vercel
 
 ---
 

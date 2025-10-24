@@ -7,8 +7,13 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Documentation](https://img.shields.io/badge/docs-bilingual-success.svg)](docs/)
 [![Roadmap](https://img.shields.io/badge/roadmap-available-informational.svg)](ROADMAP.md)
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://hubstry-harmonic-protocol.vercel.app/)
 
 An innovative communication protocol for IoT and embedded systems based on the mathematical principles of the musical harmonic series.
+
+## 🎮 **[Try the Live Demo →](https://hubstry-harmonic-protocol.vercel.app/)**
+
+Experience the Harmonic IoT Protocol in action with our interactive web simulator. Visualize harmonic frequencies, test channel mapping, and explore the mathematical foundations of the protocol.
 
 ## 🎵 Project Overview
 
@@ -64,12 +69,22 @@ make
 ./harmonic_protocol
 ```
 
+### 🌐 Web Simulator
+
+For a more interactive experience, try our **[web-based simulator](https://hubstry-harmonic-protocol.vercel.app/)** that demonstrates:
+- Real-time harmonic frequency visualization
+- Interactive channel mapping
+- FFT analysis and signal processing
+- Mathematical foundations exploration
+
 ## 📊 Applications
 
 - **Cybersecurity**: Harmonic signatures, spectral cryptography, intrusion detection
 - **Precision Agriculture**: Multi-sensor coordination with interference resistance
 - **Smart Cities**: Scalable IoT infrastructure with unified communication
 - **Industry 4.0**: Robust industrial automation and monitoring
+
+**🎯 Explore these applications interactively in our [web simulator](https://hubstry-harmonic-protocol.vercel.app/)**
 
 ## 🧪 Testing
 
@@ -115,6 +130,25 @@ This work is licensed under the [Creative Commons Attribution-NonCommercial-Shar
 ## 🏷️ Tags
 
 #DeepTech #IoT #Innovation #VentureCapital #MusicTech #EmbeddedSystems #Cybersecurity #StartupLife #TechEntrepreneur #HarmonicCommunication #AngelInvestor #VC #CVC #VentureBuilder #TechInnovation #PropietaryTechnology #MathematicalInnovation #WirelessCommunication
+
+## 🌐 Interactive Web Simulator
+
+**[🎮 Launch Simulator →](https://hubstry-harmonic-protocol.vercel.app/)**
+
+Our web-based simulator provides an interactive way to explore the Harmonic IoT Protocol:
+
+### Features
+- **Real-time Visualization**: See harmonic frequencies in action
+- **Interactive Controls**: Adjust fundamental frequency (f₀) and observe changes
+- **Channel Mapping**: Experiment with device-to-harmonic assignments
+- **FFT Analysis**: Visualize frequency domain transformations
+- **Educational Mode**: Learn the mathematical foundations step-by-step
+
+### Use Cases
+- **Educational**: Perfect for students and researchers learning about harmonic communication
+- **Prototyping**: Test protocol concepts before hardware implementation
+- **Demonstration**: Show potential investors and partners the protocol capabilities
+- **Development**: Validate mathematical models and algorithms
 
 ---
 

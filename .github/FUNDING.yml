@@ -28,18 +28,19 @@ otechie: # Replace with a single Otechie username
 lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
 
 # Custom URLs for funding
-custom: 
+custom:
   - "mailto:guilherme.ceo@hubstry.com"
   - "https://hubstry.com"
+  - "https://hubstry-harmonic-protocol.vercel.app/"
 
 # Additional information
 # This project is developed by Hubstry Deep Tech
 # For investment opportunities, partnerships, or commercial licensing:
 # Contact: guilherme.ceo@hubstry.com
-# 
+#
 # The Harmonic IoT Protocol is available under CC BY-NC-SA 4.0 license
 # Commercial licenses and enterprise support are available upon request
-# 
+#
 # Areas of collaboration:
 # - Research partnerships with universities
 # - Industrial IoT implementations

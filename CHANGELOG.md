@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub issue and pull request templates
 - Automated CI/CD workflows
 - Development environment configuration
+- **Interactive web simulator** deployed on Vercel at https://hubstry-harmonic-protocol.vercel.app/
 
 ### Changed
 - License updated to CC BY-NC-SA 4.0 International
