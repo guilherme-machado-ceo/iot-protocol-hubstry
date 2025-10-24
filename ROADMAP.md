@@ -1,6 +1,6 @@
 # Harmonic IoT Protocol - Roadmap
 
-[![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](ROADMAP.pt.md) | **EN**
+**EN** | [![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](ROADMAP.pt.md)
 
 This roadmap outlines the planned development and evolution of the Harmonic IoT Protocol. Our vision is to create the most mathematically robust, secure, and scalable communication protocol for the Internet of Things.
 

@@ -1,5 +1,7 @@
 # Security Policy
 
+**EN** | [![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](SECURITY.pt.md)
+
 ## 🔒 Harmonic IoT Protocol Security
 
 The Harmonic IoT Protocol incorporates security as a fundamental design principle, leveraging the mathematical properties of harmonic frequencies to create inherently secure communication channels.

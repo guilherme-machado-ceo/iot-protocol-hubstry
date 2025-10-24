@@ -102,13 +102,15 @@ Documentação abrangente está disponível em múltiplos idiomas:
 - **[Requisitos do Produto](docs/pt/PRD.md)**: Especificações técnicas completas
 - **[Casos de Teste](docs/pt/Tests.md)**: Procedimentos de validação e teste
 - **[Guia de Contribuição](CONTRIBUTING.pt.md)**: Diretrizes de desenvolvimento
+- **[Política de Segurança](SECURITY.pt.md)**: Práticas de segurança e relatório de vulnerabilidades
+- **[Roadmap](ROADMAP.pt.md)**: Planos de desenvolvimento futuro
 
 ### Documentação em Inglês
 - **[Product Requirements](docs/en/PRD.md)**: Complete technical specifications
 - **[Test Cases](docs/en/Tests.md)**: Validation and testing procedures
 - **[Contributing Guide](CONTRIBUTING.md)**: Development guidelines
-- **[Security Policy](SECURITY.md)**: Práticas de segurança e relatório de vulnerabilidades
-- **[Roadmap](ROADMAP.md)**: Planos de desenvolvimento futuro
+- **[Security Policy](SECURITY.md)**: Security practices and vulnerability reporting
+- **[Roadmap](ROADMAP.md)**: Future development plans
 
 ### Informações do Projeto
 - **[Changelog](CHANGELOG.md)**: Histórico de versões e atualizações
