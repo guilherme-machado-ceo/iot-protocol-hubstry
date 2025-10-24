@@ -1,0 +1,160 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 4 * * *'  # Daily performance baseline
+
+jobs:
+  load-testing:
+    name: Load Testing with k6
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: harmonic_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Start application
+      run: |
+        npm run build
+        npm start &
+        sleep 10
+      env:
+        NODE_ENV: test
+        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/harmonic_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Install k6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run performance tests
+      run: |
+        k6 run tests/performance/load-test.js
+        k6 run tests/performance/stress-test.js
+        k6 run tests/performance/harmonic-protocol-test.js
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: performance-results/
+
+  lighthouse-audit:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Start application
+      run: |
+        npm start &
+        sleep 10
+
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        configPath: './lighthouse.config.js'
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+  database-performance:
+    name: Database Performance Testing
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: harmonic_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run database migrations
+      run: npm run migrate
+      env:
+        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/harmonic_test
+
+    - name: Seed test data
+      run: npm run seed:performance
+      env:
+        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/harmonic_test
+
+    - name: Run database performance tests
+      run: npm run test:db-performance
+      env:
+        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/harmonic_test
+
+    - name: Generate performance report
+      run: npm run report:db-performance
+
+    - name: Upload database performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: db-performance-results
+        path: db-performance-results/

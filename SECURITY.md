@@ -25,10 +25,26 @@ The Harmonic IoT Protocol incorporates security as a fundamental design principl
 
 We provide security updates for the following versions:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | ✅ Yes             |
-| < 1.0   | ❌ No              |
+| Version | Supported          | Security Features |
+| ------- | ------------------ | ----------------- |
+| 1.1.x   | ✅ Yes             | Enhanced security pipeline, OWASP compliance |
+| 1.0.x   | ✅ Yes             | Basic security features |
+| < 1.0   | ❌ No              | Legacy, not supported |
+
+## 🔒 Production Security Enhancements
+
+### Automated Security Pipeline
+- **OWASP ZAP**: Automated penetration testing
+- **Snyk Integration**: Continuous vulnerability scanning
+- **Container Security**: Trivy scanning for Docker images
+- **Secrets Detection**: GitLeaks integration
+- **Dependency Scanning**: OWASP Dependency Check
+
+### Infrastructure Security
+- **Multi-layer Architecture**: Load balancer, application, and data layers
+- **Container Orchestration**: Kubernetes/Docker Swarm with security policies
+- **Network Segmentation**: Isolated networks for different services
+- **SSL/TLS Termination**: Automated certificate management
 
 ## 📢 Reporting a Vulnerability
 
