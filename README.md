@@ -1,5 +1,13 @@
 # Harmonic IoT Protocol
 
+**EN** | [![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](README.pt.md)
+
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+[![Documentation](https://img.shields.io/badge/docs-bilingual-success.svg)](docs/)
+[![Roadmap](https://img.shields.io/badge/roadmap-available-informational.svg)](ROADMAP.md)
+
 An innovative communication protocol for IoT and embedded systems based on the mathematical principles of the musical harmonic series.
 
 ## 🎵 Project Overview
@@ -72,9 +80,23 @@ Comprehensive test cases are available in `docs/Tests.md`, covering:
 
 ## 📚 Documentation
 
-Detailed technical documentation is available in the `docs/` directory:
-- **PRD.md**: Complete Product Requirements Document
-- **Tests.md**: Test cases and validation procedures
+Comprehensive documentation is available in multiple languages:
+
+### English Documentation
+- **[Product Requirements](docs/en/PRD.md)**: Complete technical specifications
+- **[Test Cases](docs/en/Tests.md)**: Validation and testing procedures
+- **[Contributing Guide](CONTRIBUTING.md)**: Development guidelines
+- **[Security Policy](SECURITY.md)**: Security practices and vulnerability reporting
+- **[Roadmap](ROADMAP.md)**: Future development plans
+
+### Portuguese Documentation
+- **[Requisitos do Produto](docs/pt/PRD.md)**: Especificações técnicas completas
+- **[Casos de Teste](docs/pt/Tests.md)**: Procedimentos de validação e teste
+- **[Guia de Contribuição](CONTRIBUTING.pt.md)**: Diretrizes de desenvolvimento
+
+### Project Information
+- **[Changelog](CHANGELOG.md)**: Version history and updates
+- **[Code of Conduct](CODE_OF_CONDUCT.md)**: Community guidelines
 
 ## 🤝 Contributing
 
@@ -84,7 +106,11 @@ This is a proprietary technology developed by Hubstry Deep Tech. For discussions
 
 ## 📄 License
 
-Proprietary - All rights reserved by Hubstry Deep Tech
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+This work is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+**Copyright (c) 2025 Guilherme Gonçalves Machado**
 
 ## 🏷️ Tags
 

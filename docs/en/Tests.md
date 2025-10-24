@@ -1,3 +1,5 @@
+[![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](../pt/Tests.md) | **EN**
+
 # Harmonic IoT Protocol - Test Cases
 
 This document outlines the test cases for the Harmonic IoT Protocol based on the approved Product Requirements Document (PRD).

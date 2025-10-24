@@ -1,0 +1,139 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Extract version from tag
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Generate changelog for this version
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## Changes in v$VERSION" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Harmonic IoT Protocol v${{ steps.changelog.outputs.VERSION }}
+        body: |
+          # Harmonic IoT Protocol v${{ steps.changelog.outputs.VERSION }}
+          
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ## 🎵 Harmonic Protocol Features
+          - Mathematical robustness through harmonic series
+          - Enhanced security with spectral cryptography
+          - Infinite scalability with harmonic channels
+          - Omnichannel integration (BLE, LoRa, Wi-Fi)
+          
+          ## 📚 Documentation
+          - [English Documentation](https://github.com/${{ github.repository }}/tree/v${{ steps.changelog.outputs.VERSION }}/docs/en)
+          - [Portuguese Documentation](https://github.com/${{ github.repository }}/tree/v${{ steps.changelog.outputs.VERSION }}/docs/pt)
+          - [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/v${{ steps.changelog.outputs.VERSION }}/CONTRIBUTING.md)
+          
+          ## 📄 License
+          This release is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+          
+          **Copyright (c) 2024 Guilherme Gonçalves Machado**
+        draft: false
+        prerelease: false
+        
+  build-artifacts:
+    name: Build Release Artifacts
+    runs-on: ${{ matrix.os }}
+    needs: create-release
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: gcc
+        cmake: true
+        
+    - name: Build release
+      run: |
+        cd src
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release
+        
+    - name: Package artifacts
+      run: |
+        cd src/build
+        tar -czf harmonic-protocol-${{ matrix.os }}.tar.gz *
+        
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: src/build/harmonic-protocol-${{ matrix.os }}.tar.gz
+        asset_name: harmonic-protocol-${{ matrix.os }}.tar.gz
+        asset_content_type: application/gzip
+        
+  update-documentation:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: create-release
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Update version in files
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        
+        # Update README badges
+        sed -i "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+/version-$VERSION/g" README.md
+        sed -i "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+/version-$VERSION/g" README.pt.md
+        
+        # Update CHANGELOG
+        sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $(date +%Y-%m-%d)/g" CHANGELOG.md
+        
+    - name: Commit version updates
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md README.pt.md CHANGELOG.md
+        git commit -m "chore: update version to ${GITHUB_REF#refs/tags/v}" || exit 0
+        git push

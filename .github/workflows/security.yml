@@ -1,0 +1,173 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        
+    - name: Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: gcc
+        cmake: true
+        
+    - name: Build project
+      run: |
+        cd src
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug
+        cmake --build . --config Debug
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+        
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check license headers
+      run: |
+        echo "Checking for proper license headers..."
+        
+        # Check that LICENSE file exists and contains CC BY-NC-SA 4.0
+        if ! grep -q "Creative Commons Attribution-NonCommercial-ShareAlike 4.0" LICENSE; then
+          echo "ERROR: LICENSE file does not contain CC BY-NC-SA 4.0 license"
+          exit 1
+        fi
+        
+        # Check copyright notice in key files
+        if ! grep -q "Copyright (c) 2024 Guilherme Gonçalves Machado" README.md; then
+          echo "ERROR: Copyright notice missing in README.md"
+          exit 1
+        fi
+        
+        echo "License compliance check passed"
+        
+  security-policy-check:
+    name: Security Policy Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate security policy
+      run: |
+        echo "Validating security policy..."
+        
+        # Check that SECURITY.md exists
+        if [ ! -f "SECURITY.md" ]; then
+          echo "WARNING: SECURITY.md file not found"
+        fi
+        
+        # Check that CODE_OF_CONDUCT.md exists
+        if [ ! -f "CODE_OF_CONDUCT.md" ]; then
+          echo "ERROR: CODE_OF_CONDUCT.md file not found"
+          exit 1
+        fi
+        
+        echo "Security policy validation completed"
+        
+  harmonic-protocol-security:
+    name: Harmonic Protocol Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Analyze harmonic security features
+      run: |
+        echo "Analyzing harmonic protocol security features..."
+        
+        # Check for security-related code patterns
+        if grep -r "harmonic.*signature" src/; then
+          echo "✓ Harmonic signature implementation found"
+        else
+          echo "⚠ Harmonic signature implementation not detected"
+        fi
+        
+        if grep -r "spectral.*crypto" src/; then
+          echo "✓ Spectral cryptography implementation found"
+        else
+          echo "⚠ Spectral cryptography implementation not detected"
+        fi
+        
+        if grep -r "intrusion.*detection" src/; then
+          echo "✓ Intrusion detection implementation found"
+        else
+          echo "⚠ Intrusion detection implementation not detected"
+        fi
+        
+        echo "Harmonic protocol security analysis completed"

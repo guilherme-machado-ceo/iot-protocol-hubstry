@@ -1,0 +1,64 @@
+{
+  "name": "Harmonic IoT Protocol Development",
+  "image": "mcr.microsoft.com/devcontainers/cpp:ubuntu-22.04",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/cmake:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools-extension-pack",
+        "twxs.cmake",
+        "ms-python.python",
+        "davidanson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "C_Cpp.default.cppStandard": "c++17",
+        "C_Cpp.default.compilerPath": "/usr/bin/g++",
+        "cmake.configureOnOpen": true,
+        "files.associations": {
+          "*.h": "cpp",
+          "*.cpp": "cpp"
+        },
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+      }
+    }
+  },
+  
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y build-essential cmake git clang-format cppcheck valgrind gdb",
+  
+  "remoteUser": "vscode",
+  
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  
+  "workspaceFolder": "/workspace",
+  
+  "forwardPorts": [8080, 3000],
+  
+  "portsAttributes": {
+    "8080": {
+      "label": "Development Server",
+      "onAutoForward": "notify"
+    }
+  }
+}

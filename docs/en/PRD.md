@@ -1,3 +1,5 @@
+[![Language: PT](https://img.shields.io/badge/lang-PT-green.svg)](../pt/PRD.md) | **EN**
+
 # Harmonic IoT Protocol - Product Requirements Document
 
 ## 1. Glossary/Thesaurus

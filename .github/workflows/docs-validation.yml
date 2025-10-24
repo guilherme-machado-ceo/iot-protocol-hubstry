@@ -1,0 +1,221 @@
+name: Documentation Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.md'
+      - 'docs/**'
+
+jobs:
+  validate-links:
+    name: Validate Markdown Links
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install markdown link checker
+      run: npm install -g markdown-link-check
+
+    - name: Check links in markdown files
+      run: |
+        find . -name "*.md" -not -path "./node_modules/*" -not -path "./.git/*" | \
+        xargs -I {} markdown-link-check {} --config .github/markdown-link-check.json
+
+  validate-bilingual-consistency:
+    name: Validate Bilingual Consistency
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check README consistency
+      run: |
+        echo "Checking README file consistency..."
+
+        # Count sections in both README files
+        en_sections=$(grep -c "^##" README.md || echo 0)
+        pt_sections=$(grep -c "^##" README.pt.md || echo 0)
+
+        echo "English README sections: $en_sections"
+        echo "Portuguese README sections: $pt_sections"
+
+        if [ "$en_sections" -ne "$pt_sections" ]; then
+          echo "ERROR: README files have different number of sections"
+          exit 1
+        fi
+
+        echo "✓ README files have consistent structure"
+
+    - name: Check CONTRIBUTING consistency
+      run: |
+        echo "Checking CONTRIBUTING file consistency..."
+
+        if [ ! -f "CONTRIBUTING.md" ] || [ ! -f "CONTRIBUTING.pt.md" ]; then
+          echo "ERROR: Missing CONTRIBUTING files"
+          exit 1
+        fi
+
+        echo "✓ Both CONTRIBUTING files exist"
+
+    - name: Check documentation directories
+      run: |
+        echo "Checking documentation directory consistency..."
+
+        if [ ! -d "docs/en" ] || [ ! -d "docs/pt" ]; then
+          echo "ERROR: Missing documentation directories"
+          exit 1
+        fi
+
+        en_docs=$(find docs/en -name "*.md" | wc -l)
+        pt_docs=$(find docs/pt -name "*.md" | wc -l)
+
+        echo "English docs: $en_docs"
+        echo "Portuguese docs: $pt_docs"
+
+        if [ "$en_docs" -ne "$pt_docs" ]; then
+          echo "ERROR: Documentation directories have different file counts"
+          exit 1
+        fi
+
+        echo "✓ Documentation directories are consistent"
+
+  validate-markdown-format:
+    name: Validate Markdown Format
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install markdownlint
+      run: npm install -g markdownlint-cli
+
+    - name: Create markdownlint config
+      run: |
+        cat > .markdownlint.json << 'EOF'
+        {
+          "MD013": false,
+          "MD033": false,
+          "MD041": false
+        }
+        EOF
+
+    - name: Lint markdown files
+      run: |
+        markdownlint README.md README.pt.md CONTRIBUTING.md CONTRIBUTING.pt.md \
+        CHANGELOG.md ROADMAP.md SECURITY.md CODE_OF_CONDUCT.md docs/**/*.md
+
+  validate-harmonic-content:
+    name: Validate Harmonic Protocol Content
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check harmonic terminology
+      run: |
+        echo "Validating harmonic protocol terminology..."
+
+        # Required terms in documentation
+        required_terms=("harmonic" "frequency" "f₀" "FFT" "spectral")
+
+        for term in "${required_terms[@]}"; do
+          if grep -qi "$term" README.md; then
+            echo "✓ Found term: $term"
+          else
+            echo "⚠ Missing term: $term"
+          fi
+        done
+
+        # Check for mathematical notation
+        if grep -q "f₀" README.md; then
+          echo "✓ Mathematical notation (f₀) found"
+        else
+          echo "ERROR: Mathematical notation missing"
+          exit 1
+        fi
+
+        # Check for protocol-specific concepts
+        concepts=("Harmonic IoT Protocol" "harmonic series" "channel mapping" "omnichannel")
+
+        for concept in "${concepts[@]}"; do
+          if grep -qi "$concept" README.md; then
+            echo "✓ Found concept: $concept"
+          else
+            echo "⚠ Missing concept: $concept"
+          fi
+        done
+
+  validate-license-compliance:
+    name: Validate License Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check license file
+      run: |
+        echo "Validating license compliance..."
+
+        # Check LICENSE file exists and contains CC BY-NC-SA 4.0
+        if [ ! -f "LICENSE" ]; then
+          echo "ERROR: LICENSE file not found"
+          exit 1
+        fi
+
+        if ! grep -q "Creative Commons Attribution-NonCommercial-ShareAlike 4.0" LICENSE; then
+          echo "ERROR: LICENSE file does not contain CC BY-NC-SA 4.0"
+          exit 1
+        fi
+
+        echo "✓ LICENSE file is valid"
+
+    - name: Check copyright notices
+      run: |
+        # Check copyright in README files
+        if ! grep -q "Copyright (c) 2025 Guilherme Gonçalves Machado" README.md; then
+          echo "ERROR: Copyright notice missing in README.md"
+          exit 1
+        fi
+
+        if ! grep -q "Guilherme Gonçalves Machado" README.pt.md; then
+          echo "ERROR: Copyright notice missing in README.pt.md"
+          exit 1
+        fi
+
+        echo "✓ Copyright notices are present"
+
+  run-validation-script:
+    name: Run Custom Validation Script
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Make validation script executable
+      run: chmod +x scripts/validate.sh
+
+    - name: Run validation script
+      run: ./scripts/validate.sh

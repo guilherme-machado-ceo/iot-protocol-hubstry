@@ -1,0 +1,48 @@
+# These are supported funding model platforms
+
+# GitHub Sponsors
+github: # Replace with up to 4 GitHub Sponsors-enabled usernames e.g., [user1, user2]
+
+# Open Collective
+open_collective: # Replace with a single Open Collective username
+
+# Ko-fi
+ko_fi: # Replace with a single Ko-fi username
+
+# Tidelift
+tidelift: # Replace with a single Tidelift package-name e.g., npm/babel
+
+# Community Bridge
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+
+# Liberapay
+liberapay: # Replace with a single Liberapay username
+
+# IssueHunt
+issuehunt: # Replace with a single IssueHunt username
+
+# Otechie
+otechie: # Replace with a single Otechie username
+
+# LFX Crowdfunding
+lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
+
+# Custom URLs for funding
+custom: 
+  - "mailto:guilherme.ceo@hubstry.com"
+  - "https://hubstry.com"
+
+# Additional information
+# This project is developed by Hubstry Deep Tech
+# For investment opportunities, partnerships, or commercial licensing:
+# Contact: guilherme.ceo@hubstry.com
+# 
+# The Harmonic IoT Protocol is available under CC BY-NC-SA 4.0 license
+# Commercial licenses and enterprise support are available upon request
+# 
+# Areas of collaboration:
+# - Research partnerships with universities
+# - Industrial IoT implementations
+# - Venture capital and angel investment
+# - Technology licensing agreements
+# - Joint development projects

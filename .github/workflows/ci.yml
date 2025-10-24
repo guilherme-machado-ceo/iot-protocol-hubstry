@@ -1,0 +1,127 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        compiler: [gcc, clang]
+        exclude:
+          - os: windows-latest
+            compiler: clang
+          - os: macos-latest
+            compiler: gcc
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: ${{ matrix.compiler }}
+        cmake: true
+        
+    - name: Configure CMake
+      run: |
+        cd src
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        
+    - name: Build project
+      run: |
+        cd src/build
+        cmake --build . --config Release
+        
+    - name: Run tests
+      run: |
+        cd src/build
+        ctest --output-on-failure
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: harmonic-protocol-${{ matrix.os }}-${{ matrix.compiler }}
+        path: src/build/
+        
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install markdown linter
+      run: npm install -g markdownlint-cli
+      
+    - name: Check markdown files
+      run: |
+        markdownlint README.md README.pt.md CONTRIBUTING.md CONTRIBUTING.pt.md
+        markdownlint docs/**/*.md
+        
+    - name: Check bilingual consistency
+      run: |
+        echo "Checking bilingual documentation consistency..."
+        # Add custom script to verify EN/PT documentation sync
+        
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: gcc
+        cmake: true
+        cppcheck: true
+        
+    - name: Run static analysis
+      run: |
+        cppcheck --enable=all --error-exitcode=1 src/
+        
+    - name: Check code formatting
+      run: |
+        find src/ -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror
+        
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
