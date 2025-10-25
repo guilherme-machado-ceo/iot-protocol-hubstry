@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Cpu, Network, Shield, Clock, Zap } from 'lucide-react';
+import { TrendingUp, Cpu, Network, Shield, Clock, Zap, Key } from 'lucide-react';
 
 interface ProtocolMetricsProps {
   activeChannels: number[];
@@ -16,6 +16,8 @@ interface Metrics {
   securityEvents: number;
   packetsProcessed: number;
   errorRate: number;
+  invalidSignatureRate: number;
+  kyberKeyUsage: number;
 }
 
 export default function ProtocolMetrics({ activeChannels, isSimulating }: ProtocolMetricsProps) {
@@ -25,7 +27,9 @@ export default function ProtocolMetrics({ activeChannels, isSimulating }: Protoc
     channelUtilization: 0,
     securityEvents: 0,
     packetsProcessed: 0,
-    errorRate: 0
+    errorRate: 0,
+    invalidSignatureRate: 0,
+    kyberKeyUsage: 0
   });
 
   const [historicalData, setHistoricalData] = useState<number[]>([]);
@@ -40,6 +44,8 @@ export default function ProtocolMetrics({ activeChannels, isSimulating }: Protoc
           const newPackets = prev.packetsProcessed + activeChannels.length * (1 + Math.floor(Math.random() * 5));
           const newErrorRate = Math.random() * 0.1;
           const newSecurityEvents = prev.securityEvents + (Math.random() > 0.95 ? 1 : 0);
+          const newInvalidSignatureRate = Math.random() * 0.05;
+          const newKyberKeyUsage = prev.kyberKeyUsage + (activeChannels.length > 0 ? 1 : 0);
 
           return {
             throughput: newThroughput,
@@ -47,7 +53,9 @@ export default function ProtocolMetrics({ activeChannels, isSimulating }: Protoc
             channelUtilization: newUtilization,
             securityEvents: newSecurityEvents,
             packetsProcessed: newPackets,
-            errorRate: newErrorRate
+            errorRate: newErrorRate,
+            invalidSignatureRate: newInvalidSignatureRate,
+            kyberKeyUsage: newKyberKeyUsage
           };
         });
 
@@ -163,6 +171,20 @@ export default function ProtocolMetrics({ activeChannels, isSimulating }: Protoc
           icon={<Zap className="w-5 h-5" />}
           color="text-orange-400"
           trend="down"
+        />
+        <MetricCard
+          title="Invalid Signatures"
+          value={metrics.invalidSignatureRate}
+          unit="%"
+          icon={<Shield className="w-5 h-5" />}
+          color="text-red-400"
+        />
+        <MetricCard
+          title="Kyber Keys Used"
+          value={metrics.kyberKeyUsage}
+          unit=""
+          icon={<Key className="w-5 h-5" />}
+          color="text-teal-400"
         />
       </div>
 
