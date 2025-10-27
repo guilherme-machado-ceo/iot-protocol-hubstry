@@ -124,7 +124,7 @@ jobs:
         format: 'ALL'
 
     - name: Upload dependency check results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: dependency-check-report
         path: reports/
