@@ -71,7 +71,7 @@ jobs:
         k6 run tests/performance/harmonic-protocol-test.js
 
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: performance-results
         path: performance-results/
@@ -154,7 +154,7 @@ jobs:
       run: npm run report:db-performance
 
     - name: Upload database performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: db-performance-results
         path: db-performance-results/
