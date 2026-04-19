@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Device {
+  id               Int      @id @default(autoincrement())
+  deviceId         String   @unique
+  deviceType       String   @default("generic")
+  fundamentalFreq  Float    @default(1000)
+  sensors          String   @default("[]")
+  harmonicChannels String   @default("{}")
+  capabilities     String   @default("[]")
+  createdAt        DateTime @default(now())
+  lastSeen         DateTime @default(now())
+
+  readings SensorReading[]
+}
+
+model SensorReading {
+  id        Int      @id @default(autoincrement())
+  deviceId  String
+  channel   Int
+  frequency Float
+  value     Float
+  unit      String   @default("")
+  timestamp DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [deviceId])
+
+  @@index([deviceId, timestamp])
+}
+
+model HarmonicProtocolLog {
+  id            Int      @id @default(autoincrement())
+  fundamentalFreq Float
+  channels      String
+  message       String?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}
