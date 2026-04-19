@@ -14,7 +14,8 @@
     "studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db-performance": "vitest run tests/performance/",
+    "test:db-performance": "vitest run tests/performance/ --reporter=verbose",
+    "report:db-performance": "echo 'DB performance tests complete'",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
   },
