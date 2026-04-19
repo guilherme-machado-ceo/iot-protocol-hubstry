@@ -69,6 +69,14 @@ make
 ./harmonic_protocol
 ```
 
+## Quickstart local (Docker)
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
+# Abrir http://localhost:3000
+```
+
 ### 🌐 Web Simulator
 
 For a more interactive experience, try our **[web-based simulator](https://hubstry-harmonic-protocol.vercel.app/)** that demonstrates:
