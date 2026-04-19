@@ -40,6 +40,27 @@ services:
 
   # ─── Profile: db ────────────────────────────────────────────────────────────
   # Ativar com: docker compose --profile db up
+  # Inclui: api (Fastify), postgres, redis
+  api:
+    profiles: [db]
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - harmonic-network
+    restart: unless-stopped
+
   postgres:
     profiles: [db]
     image: postgres:15-alpine
@@ -53,6 +74,11 @@ services:
     networks:
       - harmonic-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-harmonic} -d ${POSTGRES_DB:-harmonic_iot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
