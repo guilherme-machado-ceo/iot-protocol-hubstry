@@ -148,7 +148,7 @@ Comprehensive documentation is available in multiple languages:
 
 This is a proprietary technology developed by Hubstry Deep Tech. For discussions about investment, partnerships, or technical collaborations, please contact:
 
-**Email**: guilherme.ceo@hubstry.com
+**Email**: guilhermemachado.ceo@hubstry.dev
 
 ## License
 
