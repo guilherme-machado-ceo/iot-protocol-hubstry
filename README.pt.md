@@ -120,7 +120,7 @@ Documentação abrangente está disponível em múltiplos idiomas:
 
 Esta é uma tecnologia proprietária desenvolvida pela Hubstry Deep Tech. Para discussões sobre investimento, parcerias ou colaborações técnicas, entre em contato:
 
-**Email**: guilherme.ceo@hubstry.com
+**Email**: guilhermemachado.ceo@hubstry.dev
 
 ## 📄 Licença
 
