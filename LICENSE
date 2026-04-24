@@ -1,0 +1,58 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2023-2026 Hubstry Deep Tech
+Guilherme Goncalves Machado
+
+===============================================================================
+LICENSE SUMMARY
+===============================================================================
+
+You are free to:
+  - Share: copy and redistribute the material in any medium or format
+  - Adapt: remix, transform, and build upon the material for any purpose
+
+Under the following terms:
+  - Attribution: You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any
+    reasonable manner, but not in any way that suggests the licensor
+    endorses you or your use.
+
+No additional restrictions: You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license
+permits.
+
+===============================================================================
+RESUMO DA LICENCA
+===============================================================================
+
+VOCE E LIVRE PARA:
+  - Compartilhar: copiar e redistribuir o material em qualquer suporte
+  - Adaptar: remixar, transformar e criar a partir do material para
+    qualquer proposito
+
+SOB AS SEGUINTES CONDICOES:
+  - Atribuicao: Voce deve dar o credito apropriado, fornecer um link
+    para a licenca e indicar se foram feitas alteracoes.
+
+===============================================================================
+IMPORTANT NOTES ABOUT THIS REPOSITORY
+===============================================================================
+
+Paper 1 Reference (NOT DERIVED FROM):
+  DOI: 10.5281/zenodo.18901934 - HALE Working Paper v3.0
+  Licensed under CC BY-NC-ND 4.0
+  The HALE equation concept is referenced SOLELY as theoretical motivation.
+  NO code in this repository is derived from this paper.
+
+Paper 4 (ADAPTABLE):
+  DOI: 10.5281/zenodo.19056387 - HPG 1.0 Harmonic Protocol Grid
+  Licensed under CC BY 4.0
+  Code implementations are based on the definitions in this paper.
+
+===============================================================================
+
+Full legal text (English):
+https://creativecommons.org/licenses/by/4.0/legalcode
+
+Texto legal completo (Portugues):
+https://creativecommons.org/licenses/by/4.0/legalcode.pt-br
