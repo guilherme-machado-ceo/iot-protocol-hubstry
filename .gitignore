@@ -1,0 +1,86 @@
+# Build directories
+build/
+bin/
+obj/
+out/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+*.dll
+*.so
+*.dylib
+harmonic_protocol
+harmonic_protocol.exe
+
+# Object files
+*.o
+*.obj
+*.lo
+*.slo
+*.ko
+
+# Static libraries
+*.a
+*.lib
+*.la
+
+# Shared libraries
+*.so.*
+*.dylib
+
+# Visual Studio files
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Documentation build
+docs/_build/
+docs/html/
+docs/latex/
+
+# Test results
+test_results/
+coverage/
+
+# Environment files
+.env
+.env.local

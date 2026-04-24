@@ -1,0 +1,12 @@
+# Harmonic IoT SDK — Raspberry Pi
+# Install: pip install -r requirements.txt
+
+# FFT processing (FFTProcessor, FrequencyAnalyzer)
+numpy>=1.24.0
+
+# HTTP communication with Harmonic IoT server (HarmonicProtocol.connect/register)
+requests>=2.31.0
+
+# Raspberry Pi GPIO access (SensorManager — DS18B20, DHT22, BMP280 etc.)
+# Install only on Raspberry Pi hardware; skip on dev machines
+RPi.GPIO>=0.7.1; platform_machine == "armv7l" or platform_machine == "aarch64"
