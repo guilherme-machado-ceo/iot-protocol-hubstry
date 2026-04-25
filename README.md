@@ -4,7 +4,7 @@
 
 **HALE + HPG Framework: Harmonic Addressing and Protocol Grid for IoT**
 
-*Framework HALE + HPG: Enderecamento Harmonico e Grade de Protocolo para IoT*
+*Framework HALE + HPG: Endereçamento Harmonico e Grade de Protocolo para IoT*
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
 [![HPG 1.0](https://img.shields.io/badge/HPG-1.0-green)](hpg_core/)
@@ -13,21 +13,35 @@
 </div>
 
 ---
+## Incrementos / Latest Implementations
+
+| Módulo | Arquivo | Descrição |
+|--------|---------|-----------|
+| **HALE Pipeline** | hale_core/hale_equation.py | Pipeline: f0 - H - h - ψ - c - M - g |
+| **Funções ψ1-ψ4** | hale_core/psi_functions.py | 4 funções de endereçamento selecionáveis |
+| **Omnigrid 2D** | hpg_core/omnigrid.py | Grade O_N = H_N × {-1,+1} com Euler |
+| **HPM 1.0** | hpg_core/hpm_config.py | 12 canais harmônicos (f0=16.384 kHz) |
+| **Sinal s(t) + FFT** | hpg_core/signal_processing.py | Sinal composto + decodificação FFT |
+| **Verificação Espectral** | hpg_core/spectral_verification.py | Integridade de razões racionais |
+| **HSL Auth** | security/hsl_auth.py | H-Challenge/Response 3 etapas (~200B) |
+| **Detecção de Intrusão** | security/intrusion_detection.py | Desvio de fase Δφ > ε |
+| **Rotação LFSR** | security/key_rotation.py | Rotação de chaves via LFSR |
+
 
 ## [PT-BR] Sobre | [EN] About
 
 ### Sobre
 
-O **IoT Protocol Hubstry** implementa o framework **HALE + HPG** para comunicacao IoT baseada em subdivisoes harmonicas racionais. O framework utiliza a **Harmonic Protocol Grid (HPG 1.0)** para definir um espaco de canais baseado em razoes racionais a/b onde gcd(a,b)=1, e o pipeline **HALE** (Harmonic Addressing & Labeling Equation) para enderecamento e rotulacao de dispositivos.
+O **IoT Protocol Hubstry** implementa o framework **HALE + HPG** para comunicação IoT baseada em subdivisões harmônicas racionais. O framework utiliza a **Harmonic Protocol Grid (HPG 1.0)** para definir um espaço de canais baseado em razões racionais a/b onde gcd(a,b)=1, e o pipeline **HALE** (Harmonic Addressing & Labeling Equation) para enderecamento e rotulação de dispositivos.
 
-O conjunto harmonico racional H_N com N=16 produz 80 canais unicos, expandidos para 160 enderecos na Omnigrid O_N = H_N x {-1, +1}. A modularidade espectral natural proporcionada pelas razoes harmonicas racionais permite segmentacao de redes, autenticacao leve e deteccao de intrusao por desvio de fase.
+O conjunto harmônico racional H_N com N=16 produz 80 canais únicos, expandidos para 160 enderecos na Omnigrid O_N = H_N x {-1, +1}. A modularidade espectral natural proporcionada pelas razões harmônicas racionais permite segmentação de redes, autenticação leve e detecção de intrusão por desvio de fase.
 
 **Papers de referencia:**
 
-| Paper | DOI | Licenca | Uso |
+| Paper | DOI | Licença | Uso |
 |-------|-----|---------|-----|
-| HALE Working Paper v3.0 | [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) | CC BY-NC-ND 4.0 | Referencia teorica (sem derivacao de codigo) |
-| HPG 1.0 Harmonic Protocol Grid | [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387) | CC BY 4.0 | Base para implementacao adaptavel |
+| HALE Working Paper v3.0 | [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) | CC BY-NC-ND 4.0 | Referência teórica (sem derivação de código) |
+| HPG 1.0 Harmonic Protocol Grid | [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387) | CC BY 4.0 | Base para implementação adaptável |
 
 ### About
 
@@ -46,11 +60,11 @@ The Rational Harmonic Subdivision Set H_N with N=16 yields 80 unique channels, e
 
 ## [PT-BR] Ecossistema Hubstry | [EN] Hubstry Ecosystem
 
-Este repositorio faz parte do ecossistema Hubstry:
+Este repositório faz parte do ecossistema Hubstry:
 
-| Repositorio | Descricao | Link |
+| Repositório | Descrição | Link |
 |-------------|-----------|------|
-| **hubstry-security** | Plataforma de ciberseguranca com HSL e PQC | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-security) |
+| **hubstry-security** | Plataforma de cibersegurança com HSL e PQC | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-security) |
 | **hubstry-hale-ecosystem** | Framework matematico HALE | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-hale-ecosystem) |
 | **iot-protocol-hubstry** | Protocolo IoT / HPG (este repo) | [GitHub](https://github.com/guilherme-machado-ceo/iot-protocol-hubstry) |
 | **qualia-hub-ecosystem** | Plataforma Qualia Hub | [GitHub](https://github.com/guilherme-machado-ceo/qualia-hub-ecosystem) |
@@ -95,7 +109,7 @@ iot-protocol-hubstry/
 
 ---
 
-## [PT-BR] Conceitos Matematicos | [EN] Mathematical Concepts
+## [PT-BR] Conceitos Matemáticos | [EN] Mathematical Concepts
 
 ### Conjunto Harmonico Racional / Rational Harmonic Subdivision Set
 
@@ -103,9 +117,9 @@ H_N = {a/b em Q+ : gcd(a,b)=1, b<=N, a<=N}
 
 Cardinalidade: |H_N| = sum(phi(b)) para b=1 ate N
 
-Onde phi(b) e a funcao totiente de Euler.
+Onde phi(b) e a função totiente de Euler.
 
-Exemplo: |H_16| = 80 canais unicos.
+Exemplo: |H_16| = 80 canais únicos.
 
 ### Omnigrid / Omnigrid
 
@@ -121,15 +135,15 @@ s(t) = sum A_k * sin(2*pi*(a_k/b_k)*f0*t + phi_k)
 
 P(a/b) = 1/(a+b)
 
-### Periodo de Ressincronizacao / Resynchronization Period
+### Periodo de Ressincronização / Resynchronization Period
 
 T_sync = lcm(b1, b2, ...) / f0
 
 ---
 
-## [PT-BR] Inicio Rapido | [EN] Quick Start
+## [PT-BR] Início Rápido | [EN] Quick Start
 
-### Pre-requisitos / Prerequisites
+### Pré-requisitos / Prerequisites
 
 - Python 3.10+
 - numpy (para FFT): `pip install numpy`
@@ -160,16 +174,16 @@ print(f"Grid size: {result[\"grid_size\"]}")
 
 ---
 
-## [PT-BR] Licenca | [EN] License
+## [PT-BR] Licença | [EN] License
 
 Este projeto esta licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
 
 This project is licensed under **CC BY 4.0**. See [LICENSE](LICENSE).
 
-> **Nota sobre Paper 1:** A equacao HALE e referenciada do paper
+> **Nota sobre Paper 1:** A equação HALE e referenciada do paper
 > DOI: 10.5281/zenodo.18901934 (CC BY-NC-ND 4.0) unicamente como
-> motivacao teorica. Nenhum codigo foi derivado desse paper. A
-> implementacao e baseada no HPG 1.0 (DOI: 10.5281/zenodo.19056387,
+> motivação teórica. Nenhum código foi derivado desse paper. A
+> implementação e baseada no HPG 1.0 (DOI: 10.5281/zenodo.19056387,
 > CC BY 4.0).
 
 ---
