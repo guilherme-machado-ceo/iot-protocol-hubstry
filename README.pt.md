@@ -5,45 +5,44 @@
 [![DOI: HPG 1.0](https://zenodo.org/badge/DOI/10.5281/zenodo.19056387.svg)](https://doi.org/10.5281/zenodo.19056387)
 [![DOI: HALE](https://zenodo.org/badge/DOI/10.5281/zenodo.18901934.svg)](https://doi.org/10.5281/zenodo.18901934)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
-[![Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://hubstry-harmonic-protocol.vercel.app/)
 [![Site](https://img.shields.io/badge/site-nautam--iot-blue.svg)](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](hale_core/)
 [![Hubstry](https://img.shields.io/badge/by-Hubstry%20Deep%20Tech-0E8A7A.svg)](https://hubstry.dev)
 
-> *A proxima geracao da comunicacao inteligente — construida sobre a matematica do som.*
+> *A próxima geração da comunicação inteligente — construída sobre a matemática do som.*
 
 ---
 
 ## Incrementos Recentes
 
-| Modulo | Arquivo | Descricao |
+| Módulo | Arquivo | Descrição |
 |--------|---------|-----------|
-| **Pipeline HALE** | `hale_core/hale_equation.py` | Pipeline: f0 -> H -> h -> psi -> c -> M -> g |
-| **Funcoes psi1-psi4** | `hale_core/psi_functions.py` | 4 funcoes de enderecamento selecionaveis |
-| **Omnigrid 2D** | `hpg_core/omnigrid.py` | Grade O_N = H_N x {-1, +1} com Euler |
-| **HPM 1.0** | `hpg_core/hpm_config.py` | 12 canais harmonicos (f0 = 16.384 kHz) |
-| **Sinal s(t) + FFT** | `hpg_core/signal_processing.py` | Sinal composto + decodificacao FFT |
-| **Verificacao Espectral** | `hpg_core/spectral_verification.py` | Integridade de razoes racionais |
+| **Pipeline HALE** | `hale_core/hale_equation.py` | Pipeline: f0 → H → h → ψ → c → M → g |
+| **Funções ψ1-ψ4** | `hale_core/psi_functions.py` | 4 funções de endereçamento selecionáveis |
+| **Omnigrid 2D** | `hpg_core/omnigrid.py` | Grade O_N = H_N × {-1, +1} com Euler |
+| **HPM 1.0** | `hpg_core/hpm_config.py` | 12 canais harmônicos (f0 = 16.384 kHz) |
+| **Sinal s(t) + FFT** | `hpg_core/signal_processing.py` | Sinal composto + decodificação FFT |
+| **Verificação Espectral** | `hpg_core/spectral_verification.py` | Integridade de razões racionais |
 | **HSL Auth** | `security/hsl_auth.py` | H-Challenge/Response 3 etapas (~200B) |
-| **Deteccao de Intrusao** | `security/intrusion_detection.py` | Desvio de fase Delta-phi > epsilon |
-| **Rotacao LFSR** | `security/key_rotation.py` | Rotacao de chaves via LFSR |
+| **Detecção de Intrusão** | `security/intrusion_detection.py` | Desvio de fase Δφ > ε |
+| **Rotação LFSR** | `security/key_rotation.py` | Rotação de chaves via LFSR |
 | **Demo Web (Next.js 15)** | `demo-web/harmonic-demo/` | Dashboard interativo com React 19 + TailwindCSS 4 |
 
 ---
 
-## Visao Geral
+## Visão Geral
 
-O **Nautam IoT Protocol** (nome comercial do **Framework HALE + HPG**) e um protocolo de comunicacao IoT baseado na **serie harmonica** — o mesmo principio matematico que governa como instrumentos musicais produzem som.
+O **Nautam IoT Protocol** (nome comercial do **Framework HALE + HPG**) é um protocolo de comunicação IoT baseado na **série harmônica** — o mesmo princípio matemático que governa como instrumentos musicais produzem som.
 
-Em vez de dispositivos competirem por largura de banda, o Nautam atribui a cada dispositivo seu proprio slot de comunicacao preciso, derivado matematicamente a partir de uma frequencia mestra — como uma orquestra onde cada musico toca em relacao perfeita com a batida do regente.
+Em vez de dispositivos competirem por largura de banda, o Nautam atribui a cada dispositivo seu próprio slot de comunicação preciso, derivado matematicamente a partir de uma frequência mestra — como uma orquestra onde cada músico toca em relação perfeita com a batida do regente.
 
 **O resultado:**
 
-- Sincronizacao nativa — sem sobrecarga de negociacao
-- Interferencia zero — ortogonalidade matematicamente garantida
+- Sincronização nativa — sem sobrecarga de negociação
+- Interferência zero — ortogonalidade matematicamente garantida
 - 50–65% menos consumo de energia vs. protocolos convencionais (MQTT, CoAP, DDS)
-- Roda em qualquer hardware — implementacao puramente em software, sem chips especializados
-- Escalabilidade infinita — adicionar um dispositivo e tao simples quanto atribuir uma nova harmonica
+- Roda em qualquer hardware — implementação puramente em software, sem chips especializados
+- Escalabilidade infinita — adicionar um dispositivo é tão simples quanto atribuir uma nova harmônica
 
 ---
 
@@ -51,82 +50,82 @@ Em vez de dispositivos competirem por largura de banda, o Nautam atribui a cada 
 
 ```
 iot-protocol-hubstry/
-|
-|-- demo-web/
-|   |-- harmonic-demo/          # Dashboard web interativo
-|       |-- app/                # Next.js 15 App Router
-|       |-- components/         # Componentes React 19
-|       |-- ...                 # TailwindCSS 4
-|
-|-- hale_core/                  # HALE - Enderecamento Harmonico
-|   |-- hale_equation.py        # Pipeline: f0 -> H -> h -> psi -> c -> M -> g
-|   |-- psi_functions.py        # 4 funcoes de enderecamento (psi1-psi4)
-|
-|-- hpg_core/                   # HPG - Grade de Protocolo Harmonico
-|   |-- omnigrid.py             # Omnigrid 2D: H_N x {-1, +1} com totiente de Euler
-|   |-- hpm_config.py           # Tabela de canais HPM 1.0 (12 canais)
-|   |-- signal_processing.py    # Sinal composto s(t) + decodificacao FFT
-|   |-- spectral_verification.py # Integridade de razoes racionais
-|
-|-- security/                   # HPG-Sec - Camada de seguranca acustica
-|   |-- hsl_auth.py             # H-Challenge/Response 3 etapas (~200B)
-|   |-- intrusion_detection.py  # Deteccao por desvio de fase
-|   |-- key_rotation.py         # Rotacao de chaves via LFSR
-|
-|-- server/                     # Servidor API Fastify (TypeScript)
-|   |-- src/routes/             # Rotas da API
-|   |-- prisma/                 # Schema do banco (PostgreSQL)
-|
-|-- src/                        # Implementacao embarcada em C++
-|   |-- main.cpp                # Proof-of-concept
-|   |-- security/               # Camada de seguranca PQC
-|
-|-- docs/
-|   |-- architecture.md         # Arquitetura de 4 camadas
-|   |-- en/                     # Documentacao em ingles
-|   |-- pt/                     # Documentacao em portugues
+│
+├── demo-web/
+│   └── harmonic-demo/          # Dashboard web interativo
+│       ├── app/                # Next.js 15 App Router
+│       ├── components/         # Componentes React 19
+│       └── ...                 # TailwindCSS 4
+│
+├── hale_core/                  # HALE - Endereçamento Harmônico
+│   ├── hale_equation.py        # Pipeline: f0 → H → h → ψ → c → M → g
+│   └── psi_functions.py        # 4 funções de endereçamento (ψ1-ψ4)
+│
+├── hpg_core/                   # HPG - Grade de Protocolo Harmônico
+│   ├── omnigrid.py             # Omnigrid 2D: H_N × {-1, +1} com totiente de Euler
+│   ├── hpm_config.py           # Tabela de canais HPM 1.0 (12 canais)
+│   ├── signal_processing.py    # Sinal composto s(t) + decodificação FFT
+│   └── spectral_verification.py # Integridade de razões racionais
+│
+├── security/                   # HPG-Sec - Camada de segurança acústica
+│   ├── hsl_auth.py             # H-Challenge/Response 3 etapas (~200B)
+│   ├── intrusion_detection.py  # Detecção por desvio de fase
+│   └── key_rotation.py         # Rotação de chaves via LFSR
+│
+├── server/                     # Servidor API Fastify (TypeScript)
+│   ├── src/routes/             # Rotas da API
+│   └── prisma/                 # Schema do banco (PostgreSQL)
+│
+├── src/                        # Implementação embarcada em C++
+│   ├── main.cpp                # Proof-of-concept
+│   └── security/               # Camada de segurança PQC
+│
+├── docs/
+│   ├── architecture.md         # Arquitetura de 4 camadas
+│   ├── en/                     # Documentação em inglês
+│   └── pt/                     # Documentação em português
 ```
 
 ### Camadas do Protocolo
 
-| Camada | Nome | Descricao |
+| Camada | Nome | Descrição |
 |--------|------|-----------|
-| **L1** | HPG Core | Frequencia mestra, atribuicao de slots harmonicos, motor de ortogonalidade |
-| **L2** | HPG Signal | Sinal composto s(t), decodificacao FFT, verificacao espectral |
-| **L3** | HALE | Enderecamento de dispositivos, gerenciamento de latencia, sincronizacao via funcoes psi |
-| **L4** | HPG-Sec | Autenticacao por assinatura timbral, deteccao de intrusao espectral, rotacao de chaves LFSR |
+| **L1** | HPG Core | Frequência mestra, atribuição de slots harmônicos, motor de ortogonalidade |
+| **L2** | HPG Signal | Sinal composto s(t), decodificação FFT, verificação espectral |
+| **L3** | HALE | Endereçamento de dispositivos, gerenciamento de latência, sincronização via funções ψ |
+| **L4** | HPG-Sec | Autenticação por assinatura timbral, detecção de intrusão espectral, rotação de chaves LFSR |
 
 ---
 
-## Conceitos Matematicos
+## Conceitos Matemáticos
 
-### Conjunto Harmonico Racional
+### Conjunto Harmônico Racional
 
-H_N = { a/b em Q+ : gcd(a, b) = 1, b <= N, a <= N }
+H_N = { a/b ∈ Q⁺ : gcd(a, b) = 1, b ≤ N, a ≤ N }
 
-Cardinalidade: |H_N| = soma(phi(b)) para b = 1 ate N
+Cardinalidade: |H_N| = Σ φ(b) para b = 1 até N
 
-Onde phi(b) e a funcao totiente de Euler.
+Onde φ(b) é a função totiente de Euler.
 
-Exemplo: |H_16| = 80 canais unicos.
+Exemplo: |H_16| = 80 canais únicos.
 
 ### Omnigrid
 
-O_N = H_N x {-1, +1}
+O_N = H_N × {-1, +1}
 
-|O_16| = 80 x 2 = 160 enderecos bidimensionais.
+|O_16| = 80 × 2 = 160 endereços bidimensionais.
 
 ### Sinal Composto
 
-s(t) = soma A_k * sin(2 * pi * (a_k / b_k) * f0 * t + phi_k)
+s(t) = Σ Aₖ sin(2π(aₖ/bₖ)f₀t + φₖ)
 
 ### Prioridade de Canal
 
 P(a/b) = 1 / (a + b)
 
-### Periodo de Ressincronizacao
+### Período de Ressincronização
 
-T_sync = mmc(b1, b2, ...) / f0
+T_sync = mmc(b₁, b₂, ...) / f₀
 
 ---
 
@@ -145,12 +144,12 @@ Abre em **http://localhost:3000**
 
 > Requer Node.js 18+ instalado.
 
-**Demo ao vivo:** [hubstry-harmonic-protocol.vercel.app](https://hubstry-harmonic-protocol.vercel.app/)
+**Site Nautam:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 
-### Modulos Python
+### Módulos Python
 
 ```python
-# Nao e necessario requirements.txt — os modulos core usam apenas a biblioteca padrao
+# Não é necessário requirements.txt — os módulos core usam apenas a biblioteca padrão
 # Opcional: pip install numpy  (para FFT em signal_processing.py)
 
 from hpg_core.omnigrid import compute_hn, cardinality_hn, omnigrid_2d
@@ -176,42 +175,42 @@ print(f"Grid size: {result['grid_size']}")
 
 ---
 
-## Fundamentacao Cientifica
+## Fundamentação Científica
 
-O protocolo Nautam e fundamentado em pesquisa revisada por pares publicada no Zenodo:
+O protocolo Nautam é fundamentado em pesquisa revisada por pares publicada no Zenodo:
 
-| Publicacao | DOI | Licenca | Descricao |
+| Publicação | DOI | Licença | Descrição |
 |---|---|---|---|
-| HALE: Harmonic Addressing & Labeling Equation | [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) | CC BY 4.0 | Framework matematico de proposito geral para sistemas complexos |
-| Harmonic Protocol Grid (HPG 1.0) | [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387) | CC BY 4.0 | Especificacao fundamental da familia de protocolos HPG |
+| HALE: Harmonic Addressing & Labeling Equation | [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) | CC BY 4.0 | Framework matemático de propósito geral para sistemas complexos |
+| Harmonic Protocol Grid (HPG 1.0) | [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387) | CC BY 4.0 | Especificação fundamental da família de protocolos HPG |
 
-**Autor:** Guilherme Goncalves Machado
+**Autor:** Guilherme Gonçalves Machado
 **ORCID:** [0009-0008-1083-0784](https://orcid.org/0009-0008-1083-0784)
 
 ---
 
-## Familia de Protocolos
+## Família de Protocolos
 
-Nautam e a implementacao comercial da familia HPG (Harmonic Protocol Grid):
+Nautam é a implementação comercial da família HPG (Harmonic Protocol Grid):
 
 | Variante | Foco | Status |
 |---|---|---|
-| **HPG-Core** | Protocolo harmonico base | Ativo |
-| **HPD-T** | Enderecamento derivado de temperamento (12-TET ate Carrillo 96 tons) | Pesquisa |
-| **HPG-R** | Robotica humanode — hierarquia harmonica por subsistema corporal | Pesquisa |
-| **HPG-Sec** | Criptografia acustica — autenticacao PUF timbral | Pesquisa |
-| **HPG-P** | Acustica fisica — assinaturas materiais inarmonicas | Pesquisa |
-| **HPG-D** | Implementacao puramente digital / NCO | Ativo |
+| **HPG-Core** | Protocolo harmônico base | Ativo |
+| **HPD-T** | Endereçamento derivado de temperamento (12-TET até Carrillo 96 tons) | Pesquisa |
+| **HPG-R** | Robótica humanoide — hierarquia harmônica por subsistema corporal | Pesquisa |
+| **HPG-Sec** | Criptografia acústica — autenticação PUF timbral | Pesquisa |
+| **HPG-P** | Acústica física — assinaturas materiais inarmônicas | Pesquisa |
+| **HPG-D** | Implementação puramente digital / NCO | Ativo |
 
 ---
 
-## Aplicacoes
+## Aplicações
 
-- Cidades inteligentes — redes de sensores de transito, energia, agua, residuos
-- IoT industrial — automacao de fabricas, manutencao preditiva, logistica
-- Robotica — hierarquia harmonica para coordenacao de subsistemas humanoides
-- Seguranca — funcoes fisicamente inclonaveis via assinaturas timbrais
-- Infraestrutura de transporte — monitoramento ferroviario, automacao portuaria
+- Cidades inteligentes — redes de sensores de trânsito, energia, água, resíduos
+- IoT industrial — automação de fábricas, manutenção preditiva, logística
+- Robótica — hierarquia harmônica para coordenação de subsistemas humanoides
+- Segurança — funções fisicamente inclonáveis via assinaturas timbrais
+- Infraestrutura de transporte — monitoramento ferroviário, automação portuária
 
 ---
 
@@ -229,24 +228,24 @@ Nautam e a implementacao comercial da familia HPG (Harmonic Protocol Grid):
 
 ## Ecossistema Hubstry
 
-Este repositorio faz parte do ecossistema Hubstry:
+Este repositório faz parte do ecossistema Hubstry:
 
-| Repositorio | Descricao | Link |
+| Repositório | Descrição | Link |
 |---|---|---|
-| **hubstry-security** | Plataforma de ciberseguranca com HSL e PQC | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-security) |
-| **hubstry-hale-ecosystem** | Framework matematico HALE | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-hale-ecosystem) |
+| **hubstry-security** | Plataforma de cibersegurança com HSL e PQC | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-security) |
+| **hubstry-hale-ecosystem** | Framework matemático HALE | [GitHub](https://github.com/guilherme-machado-ceo/hubstry-hale-ecosystem) |
 | **iot-protocol-hubstry** | Protocolo IoT / HPG (este repo) | [GitHub](https://github.com/guilherme-machado-ceo/iot-protocol-hubstry) |
 | **qualia-hub-ecosystem** | Plataforma Qualia Hub | [GitHub](https://github.com/guilherme-machado-ceo/qualia-hub-ecosystem) |
 
 ---
 
-## Licenca
+## Licença
 
-Este projeto esta licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
+Este projeto está licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
 
-> **Nota sobre Paper 1:** A equacao HALE e referenciada do paper
+> **Nota sobre Paper 1:** A equação HALE é referenciada do paper
 > DOI: [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) (CC BY 4.0)
-> unicamente como motivacao teorica. A implementacao e baseada no
+> unicamente como motivação teórica. A implementação é baseada no
 > HPG 1.0 (DOI: [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387), CC BY 4.0).
 
 ---
@@ -255,7 +254,7 @@ Este projeto esta licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
 
 **Nautam** por **Hubstry Deep Tech** | Fundada em 2023 | Brasil
 
-Autor: **Guilherme Goncalves Machado**
+Autor: **Guilherme Gonçalves Machado**
 ORCID: [0009-0008-1083-0784](https://orcid.org/0009-0008-1083-0784)
 
 [hubstry.dev](https://hubstry.dev) | [Site Nautam](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/) | guilhermemachado@hubstry.onmicrosoft.com
