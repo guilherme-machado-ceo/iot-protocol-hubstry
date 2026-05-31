@@ -79,7 +79,7 @@ st.markdown("""
         border-left: 4px solid #00ffff;
         border-radius: 0 12px 12px 0;
         padding: 16px 20px;
-        margin: 8px 0 16px 0;
+        margin: 8px 0 16px 0; color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -136,7 +136,7 @@ with st.sidebar:
         """
 <div style='background: linear-gradient(135deg, #0d2137 0%, #0a1628 100%);
 border-left: 4px solid #00ffff; border-radius: 0 12px 12px 0;
-padding: 12px 16px; font-size: 0.82rem; color: #cccccc;'>
+padding: 12px 16px; font-size: 0.82rem; color: #ffffff;'>
 <strong style='color: #00ffff;'>O que é este dashboard?</strong><br><br>
 Este painel executa a <strong>tecnologia real</strong> do protocolo Nautam
 em tempo real — a mesma matemática que será implantada em
