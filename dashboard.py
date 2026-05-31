@@ -144,9 +144,9 @@ with st.sidebar:
 border-left: 4px solid #00ffff; border-radius: 0 12px 12px 0;
 padding: 12px 16px; font-size: 0.92rem; color: #ffffff;'>
 <strong style='color: #00ffff;'>O que é este dashboard?</strong><br><br>
-Este painel executa a <strong>tecnologia real</strong> do protocolo Nautam
-em tempo real — a mesma matemática que será implantada em
-cidades inteligentes, indústrias e infraestrutura governamental.<br><br>
+Este painel é um <strong>POC</strong> que executa a <strong>matemática real</strong>
+do protocolo Nautam — as fórmulas publicadas nos papers científicos.
+Os dados são simulados; o pipeline é o mesmo de implantações reais.<br><br>
 Navegue pelas seções para ver cada camada do protocolo em ação:
 endereçamento, comunicação, autenticação e segurança.
 </div>
@@ -169,13 +169,15 @@ st.title("🌊 Nautam IoT Protocol — Dashboard")
 st.caption("HALE + HPG Framework | Pipeline real em Python")
 st.markdown(
     "<div class='exec-box'>"
-    "<strong>Contexto:</strong> Este dashboard executa o protocolo Nautam "
-    "em tempo real. Cada computação usa as fórmulas publicadas nos papers "
-    "científicos (DOI: 18901934, 19056387). Não é uma simulação — é a "
-    "tecnologia real executável. / "
-    "This dashboard executes the Nautam protocol in real time. Every computation "
-    "uses the formulas published in peer-reviewed papers. Not a simulation — "
-    "it is the actual, executable technology."
+    "<strong>Contexto:</strong> Este dashboard é um <strong>POC (Proof of Concept)</strong> "
+    "que executa a <strong>matemática real</strong> do protocolo Nautam — as mesmas fórmulas "
+    "publicadas nos papers científicos (DOI: 18901934, 19056387). Os dados são gerados "
+    "por simulação, sem dispositivos reais conectados. O pipeline demonstrado é o mesmo "
+    "que será utilizado em implantações reais com dispositivos IoT. / "
+    "This dashboard is a <strong>POC (Proof of Concept)</strong> that executes the "
+    "<strong>real mathematics</strong> of the Nautam protocol — the same formulas published "
+    "in peer-reviewed papers (DOI: 18901934, 19056387). Data is simulated, without real devices. "
+    "The pipeline demonstrated is the same that will be used in real IoT deployments."
     "</div>",
     unsafe_allow_html=True,
 )
@@ -804,7 +806,7 @@ elif page == "🛡️ Detecção de Intrusão":
         threshold_deg = st.slider("Limiar ε (graus / degrees)", 0.5, 30.0, 5.0, step=0.5, key="intr_thresh")
         threshold_rad = threshold_deg * 3.14159 / 180.0
 
-        inject_intrusion = st.checkbox("Injetar intrusão / Inject intrusion", value=True, key="intr_inject")
+        inject_intrusion = st.checkbox("Injetar intrusão / Inject intrusion", value=False, key="intr_inject")
         deviation_deg = st.slider("Desvio do intruso (graus / degrees)", 5, 45, 15, key="intr_dev")
 
         detect_btn = st.button("🔍 Executar Detecção / Run Detection", type="primary", use_container_width=True)
