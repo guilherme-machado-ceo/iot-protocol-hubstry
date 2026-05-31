@@ -200,6 +200,8 @@ Opens at **http://localhost:3000**
 
 **Nautam site:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 
+> **Important:** The web dashboard is a **visual simulation** of the harmonic protocol concept — designed for demonstration and investor presentations. It displays mock data (metrics, channel activity) and does not execute the actual HALE/HPG pipeline. For the real protocol implementation, see the **Python modules** below.
+
 ### Python Modules
 
 ```python
@@ -245,6 +247,8 @@ Abre em **http://localhost:3000**
 > Requer Node.js 18+ instalado.
 
 **Site Nautam:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
+
+> **Importante:** O dashboard web é uma **simulação visual** do conceito do protocolo harmônico — projetado para demonstração e apresentações a investidores. Exibe dados simulados (métricas, atividade de canais) e não executa o pipeline HALE/HPG real. Para a implementação real do protocolo, veja os **módulos Python** abaixo.
 
 ### Módulos Python
 
