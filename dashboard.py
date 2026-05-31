@@ -75,11 +75,17 @@ st.markdown("""
         margin-bottom: 16px;
     }
     .exec-box {
-        background: linear-gradient(135deg, #0d2137 0%, #0a1628 100%);
+        background: #000000;
         border-left: 4px solid #00ffff;
         border-radius: 0 12px 12px 0;
         padding: 16px 20px;
-        margin: 8px 0 16px 0; color: #ffffff;
+        margin: 8px 0 16px 0;
+        color: #ffffff;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    .exec-box strong {
+        color: #00ffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -136,7 +142,7 @@ with st.sidebar:
         """
 <div style='background: linear-gradient(135deg, #0d2137 0%, #0a1628 100%);
 border-left: 4px solid #00ffff; border-radius: 0 12px 12px 0;
-padding: 12px 16px; font-size: 0.82rem; color: #ffffff;'>
+padding: 12px 16px; font-size: 0.92rem; color: #ffffff;'>
 <strong style='color: #00ffff;'>O que é este dashboard?</strong><br><br>
 Este painel executa a <strong>tecnologia real</strong> do protocolo Nautam
 em tempo real — a mesma matemática que será implantada em
@@ -150,7 +156,7 @@ endereçamento, comunicação, autenticação e segurança.
 
     st.markdown("---")
     st.markdown(
-        "<small style='color: #666;'>"
+        "<small style='color: #999;'>"
         "DOI: [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) | "
         "DOI: [10.5281/zenodo.19056387](https://doi.org/10.5281/zenodo.19056387)"
         "</small>",
@@ -519,7 +525,7 @@ elif page == "📟 Omnigrid 2D":
             ),
             text=labels,
             textposition="top center",
-            textfont=dict(size=7, color="#aaaaaa"),
+            textfont=dict(size=7, color="#ffffff"),
             name="Endereços",
         ))
 
@@ -833,10 +839,10 @@ elif page == "🛡️ Detecção de Intrusão":
 
             st.markdown(
                 f"<div style='border: 2px solid {sev_color}; padding: 16px; border-radius: 12px; "
-                f"background: rgba(0,0,0,0.3); text-align: center;'>"
+                f"background: rgba(0,0,0,0.3); text-align: center; color: #ffffff;'>"
                 f"<div style='font-size: 2rem; color: {sev_color}; font-weight: bold;'>"
                 f"{report.severity.upper()}</div>"
-                f"<div>Canais monitorados: {report.total_channels} | "
+                f"<div style='color: #ffffff;'>Canais monitorados: {report.total_channels} | "
                 f"Alertas: {report.alert_channels}</div></div>",
                 unsafe_allow_html=True,
             )
