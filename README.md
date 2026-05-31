@@ -9,7 +9,8 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-nautam--iot-blue.svg)](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](hale_core/)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black.svg)](demo-web/harmonic-demo/)
+[![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B.svg)](dashboard.py)
+[![Next.js 15](https://img.shields.io/badge/Sim_Web-Next.js_15-black.svg)](demo-web/harmonic-demo/)
 [![Hubstry](https://img.shields.io/badge/by-Hubstry%20Deep%20Tech-0E8A7A.svg)](https://hubstry.dev)
 
 > *A new communication standard for connected devices — built on the mathematics of sound.*
@@ -33,7 +34,8 @@
 | **HSL Auth** | `security/hsl_auth.py` | H-Challenge/Response 3 etapas (~200B) |
 | **Detecção de Intrusão** | `security/intrusion_detection.py` | Desvio de fase Δφ > ε |
 | **Rotação LFSR** | `security/key_rotation.py` | Rotação de chaves via LFSR |
-| **Demo Web (Next.js 15)** | `demo-web/harmonic-demo/` | Dashboard interativo com React 19 + TailwindCSS 4 |
+| **Dashboard (Streamlit)** | `dashboard.py` | Dashboard interativo — pipeline real com 7 seções |
+| **Demo Web (Next.js 15)** | `demo-web/harmonic-demo/` | Simulação visual com React 19 + TailwindCSS 4 |
 
 ---
 
@@ -74,8 +76,11 @@ Em vez de dispositivos competirem por largura de banda (como 500 trabalhadores g
 ```
 iot-protocol-hubstry/
 │
+├── dashboard.py                 # Streamlit interactive dashboard (real pipeline)
+├── requirements.txt             # Python dependencies (streamlit, numpy, plotly)
+│
 ├── demo-web/
-│   └── harmonic-demo/          # Interactive web dashboard
+│   └── harmonic-demo/          # Visual simulation dashboard
 │       ├── app/                # Next.js 15 App Router
 │       ├── components/         # React 19 components
 │       └── ...                 # TailwindCSS 4
@@ -94,14 +99,6 @@ iot-protocol-hubstry/
 │   ├── hsl_auth.py             # H-Challenge/Response 3-step protocol (~200B)
 │   ├── intrusion_detection.py  # Phase deviation detection
 │   └── key_rotation.py         # LFSR key rotation
-│
-├── server/                     # Fastify API server (TypeScript)
-│   ├── src/routes/             # API routes
-│   └── prisma/                 # Database schema (PostgreSQL)
-│
-├── src/                        # C++ embedded implementation
-│   ├── main.cpp                # Proof-of-concept
-│   └── security/               # PQC security layer
 │
 ├── docs/
 │   ├── architecture.md         # 4-layer protocol architecture
@@ -183,12 +180,44 @@ T_sync = mmc(b₁, b₂, ...) / f₀
 
 ---
 
-## [EN] Running the Demo
+## [EN] Running the Protocol
 
-### Web Dashboard (Next.js 15)
+### Interactive Dashboard (Streamlit) — Real Pipeline
+
+The Streamlit dashboard executes the **actual HALE + HPG pipeline** in real time — no mock data, no simulation. Every computation (harmonic grid, signal generation, FFT decoding, authentication, intrusion detection) uses the real formulas published in the Zenodo papers.
 
 ```bash
 git clone https://github.com/guilherme-machado-ceo/iot-protocol-hubstry.git
+cd iot-protocol-hubstry
+pip install -r requirements.txt
+streamlit run dashboard.py
+```
+
+Opens at **http://localhost:8501** — the dashboard opens automatically in your browser.
+
+> Requires Python 3.10+ installed.
+
+**Dashboard sections (7 interactive modules):**
+
+| Section | What it does |
+|---------|-------------|
+| Visão Geral | Protocol overview: H_N cardinality, O_N addresses, 4-layer architecture |
+| HALE Pipeline | Full pipeline f₀ → H → h → ψ → c → M → g with selectable ψ functions |
+| Omnigrid 2D | 2D address space O_N = H_N × {-1, +1} visualization |
+| Sinal Composto + FFT | Real composite signal s(t) generation + FFT spectral decoding |
+| Segurança (HSL) | HSL Challenge/Response authentication protocol (~200 bytes) |
+| Detecção de Intrusão | Phase deviation intrusion detection (Δφ > ε) |
+| Rotação de Chaves (LFSR) | LFSR-based cryptographic key rotation engine |
+
+See [README_DASHBOARD.md](README_DASHBOARD.md) for full dashboard documentation.
+
+**Nautam site:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
+
+### Visual Simulation (Next.js 15)
+
+> **Important:** The Next.js web dashboard is a **visual simulation** of the harmonic protocol concept — designed for investor presentations and marketing materials. It displays mock data (metrics, channel activity) and does **not** execute the actual HALE/HPG pipeline. For the real protocol, use the Streamlit dashboard above.
+
+```bash
 cd iot-protocol-hubstry/demo-web/harmonic-demo
 npm install
 npm run dev
@@ -198,16 +227,11 @@ Opens at **http://localhost:3000**
 
 > Requires Node.js 18+ installed.
 
-**Nautam site:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
+### Python Modules (Programmatic API)
 
-> **Important:** The web dashboard is a **visual simulation** of the harmonic protocol concept — designed for demonstration and investor presentations. It displays mock data (metrics, channel activity) and does not execute the actual HALE/HPG pipeline. For the real protocol implementation, see the **Python modules** below.
-
-### Python Modules
+The core modules can also be used directly in Python code — no Streamlit required:
 
 ```python
-# No requirements.txt needed — core modules use only Python standard library
-# Optional: pip install numpy  (for FFT in signal_processing.py)
-
 from hpg_core.omnigrid import compute_hn, cardinality_hn, omnigrid_2d
 from hpg_core.hpm_config import HPM10Config, get_channel_table
 from hpg_core.signal_processing import generate_composite_signal
@@ -226,17 +250,51 @@ for ch in table[:3]:
 # Full HALE pipeline
 pipeline = HALEPipeline(f0=16384.0, max_denominator=16)
 result = pipeline.execute(divisors=[1, 2, 3, 4, 5])
-print(f"Grid size: {result['grid_size']}")
+print(f"Grid size: {result.grid_size}")
+print(f"Omnigrid addresses: {result.omnigrid_size}")
+print(f"Resync period: {result.resync_period * 1000:.4f} ms")
 ```
 
 ---
 
-## [PT-BR] Executando o Demo
+## [PT-BR] Executando o Protocolo
 
-### Dashboard Web (Next.js 15)
+### Dashboard Interativo (Streamlit) — Pipeline Real
+
+O dashboard Streamlit executa o **pipeline HALE + HPG real** em tempo real — sem dados simulados, sem mock. Cada computação (grade harmônica, geração de sinal, decodificação FFT, autenticação, detecção de intrusão) usa as fórmulas reais publicadas nos papers Zenodo.
 
 ```bash
 git clone https://github.com/guilherme-machado-ceo/iot-protocol-hubstry.git
+cd iot-protocol-hubstry
+pip install -r requirements.txt
+streamlit run dashboard.py
+```
+
+Abre em **http://localhost:8501** — o dashboard abre automaticamente no navegador.
+
+> Requer Python 3.10+ instalado.
+
+**Seções do dashboard (7 módulos interativos):**
+
+| Seção | O que faz |
+|-------|-----------|
+| Visão Geral | Visão geral do protocolo: cardinalidade H_N, endereços O_N, arquitetura 4 camadas |
+| HALE Pipeline | Pipeline completa f₀ → H → h → ψ → c → M → g com funções ψ selecionáveis |
+| Omnigrid 2D | Visualização do espaço de endereços 2D O_N = H_N × {-1, +1} |
+| Sinal Composto + FFT | Geração real do sinal composto s(t) + decodificação espectral FFT |
+| Segurança (HSL) | Protocolo de autenticação HSL Challenge/Response (~200 bytes) |
+| Detecção de Intrusão | Detecção de intrusão por desvio de fase (Δφ > ε) |
+| Rotação de Chaves (LFSR) | Motor de rotação de chaves criptográficas via LFSR |
+
+Veja [README_DASHBOARD.md](README_DASHBOARD.md) para documentação completa do dashboard.
+
+**Site Nautam:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
+
+### Simulação Visual (Next.js 15)
+
+> **Importante:** O dashboard web Next.js é uma **simulação visual** do conceito do protocolo harmônico — projetado para apresentações a investidores e materiais de marketing. Exibe dados simulados (métricas, atividade de canais) e **não** executa o pipeline HALE/HPG real. Para o protocolo real, use o dashboard Streamlit acima.
+
+```bash
 cd iot-protocol-hubstry/demo-web/harmonic-demo
 npm install
 npm run dev
@@ -246,16 +304,11 @@ Abre em **http://localhost:3000**
 
 > Requer Node.js 18+ instalado.
 
-**Site Nautam:** [nautam-iot-protocol-site](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
+### Módulos Python (API Programática)
 
-> **Importante:** O dashboard web é uma **simulação visual** do conceito do protocolo harmônico — projetado para demonstração e apresentações a investidores. Exibe dados simulados (métricas, atividade de canais) e não executa o pipeline HALE/HPG real. Para a implementação real do protocolo, veja os **módulos Python** abaixo.
-
-### Módulos Python
+Os módulos core também podem ser usados diretamente em código Python — sem necessidade do Streamlit:
 
 ```python
-# Não é necessário requirements.txt — os módulos core usam apenas a biblioteca padrão
-# Opcional: pip install numpy  (para FFT em signal_processing.py)
-
 from hpg_core.omnigrid import compute_hn, cardinality_hn, omnigrid_2d
 from hpg_core.hpm_config import HPM10Config, get_channel_table
 from hpg_core.signal_processing import generate_composite_signal
@@ -274,7 +327,9 @@ for ch in table[:3]:
 # Pipeline HALE completo
 pipeline = HALEPipeline(f0=16384.0, max_denominator=16)
 result = pipeline.execute(divisors=[1, 2, 3, 4, 5])
-print(f"Grid size: {result['grid_size']}")
+print(f"Grid size: {result.grid_size}")
+print(f"Endereços Omnigrid: {result.omnigrid_size}")
+print(f"Período de ressync: {result.resync_period * 1000:.4f} ms")
 ```
 
 ---
