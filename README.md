@@ -4,8 +4,8 @@
 
 **HALE + HPG Framework: Harmonic Addressing and Protocol Grid for IoT**
 
-[![DOI: HPG 1.0](https://zenodo.org/badge/DOI/10.5281/zenodo.19056387.svg)](https://doi.org/10.5281/zenodo.19056387)
-[![DOI: HALE](https://zenodo.org/badge/DOI/10.5281/zenodo.18901934.svg)](https://doi.org/10.5281/zenodo.18901934)
+[![DOI: HPG 1.0](https://img.shields.io/badge/DOI-10.5281/zenodo.19056387-blue.svg)](https://doi.org/10.5281/zenodo.19056387)
+[![DOI: HALE](https://img.shields.io/badge/DOI-10.5281/zenodo.18901934-blue.svg)](https://doi.org/10.5281/zenodo.18901934)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-nautam--iot-blue.svg)](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](hale_core/)
