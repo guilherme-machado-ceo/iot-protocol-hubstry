@@ -21,8 +21,8 @@ export interface CriarOpcoes {
 
 export interface Dependencias {
   apiKey: {
-    create(args: { data: { name: string; prefix: string; keyHash: string; scopes: Scope[]; expiresAt: Date | null } }): Promise<{ id: string }>
-    update(args: { where: { id: string }; data: { revokedAt: Date } }): Promise<unknown>
+    create(args: { data: { name: string; prefix: string; keyHash: string; scopes: Scope[]; expiresAt: Date | null } }): Promise<{ id: number }>
+    update(args: { where: { id: number }; data: { revokedAt: Date } }): Promise<unknown>
   }
   // Grava o valor num segredo novo e devolve o ARN.
   gravarSegredo(nome: string, valor: string, tags: Record<string, string>): Promise<string>
