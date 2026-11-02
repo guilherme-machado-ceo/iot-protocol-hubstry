@@ -1,0 +1,58 @@
+name: Espelho master
+
+# A main é a única fonte da verdade. A master existe só como espelho somente
+# leitura, porque o app do Streamlit Community Cloud
+# (https://nautam-iot-protocol.streamlit.app/) está ligado a ela e o Streamlit
+# não permite trocar a branch de um app publicado sem apagá-lo.
+#
+# Regra: ninguém faz commit direto na master. O push abaixo não usa --force:
+# se a master divergir da main, o job falha em vez de sobrescrever trabalho.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: espelho-master
+  cancel-in-progress: false
+
+# Padrão somente leitura; a escrita fica restrita ao job que atualiza a master.
+permissions:
+  contents: read
+
+jobs:
+  espelhar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Proteção contra execução atrasada: um push antigo pode rodar depois de
+      # um mais novo. Espelha sempre a ponta ATUAL da main, nunca o commit
+      # que disparou o evento, para a master não ficar para trás.
+      - name: Ir para a ponta atual da main
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "Execução atrasada: evento em $(git rev-parse --short HEAD), main já em $(git rev-parse --short origin/main). Usando a ponta atual."
+          fi
+          git checkout --detach origin/main
+
+      - name: Atualizar master com a main (somente fast-forward)
+        run: |
+          git fetch origin master
+          if [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ]; then
+            echo "master já está em $(git rev-parse --short HEAD). Nada a fazer."
+            exit 0
+          fi
+          if ! git merge-base --is-ancestor origin/master HEAD; then
+            echo "::error::A master divergiu da main. Verifique commits feitos direto na master antes de espelhar."
+            git log --oneline HEAD..origin/master
+            exit 1
+          fi
+          git push origin HEAD:refs/heads/master
+          echo "master agora aponta para $(git rev-parse --short HEAD)"
