@@ -72,15 +72,25 @@ async function main() {
   const host = process.env.HOST ?? '0.0.0.0'
 
   // Encerramento gracioso: o ECS envia SIGTERM antes de parar a tarefa.
+  // Cada etapa é tentada mesmo que a anterior falhe; o código de saída só é 0
+  // se todas concluírem sem erro.
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     process.once(signal, async () => {
       app.log.info(`${signal} recebido, encerrando`)
+      let exitCode = 0
       try {
         await app.close()
-        await disconnectPrisma()
-      } finally {
-        process.exit(0)
+      } catch (err) {
+        exitCode = 1
+        app.log.error({ err }, 'falha ao fechar o servidor HTTP')
       }
+      try {
+        await disconnectPrisma()
+      } catch (err) {
+        exitCode = 1
+        app.log.error({ err }, 'falha ao desconectar o Prisma')
+      }
+      process.exit(exitCode)
     })
   }
 

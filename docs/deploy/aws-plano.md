@@ -52,6 +52,8 @@ Se a política de segurança exigir tarefas sem IP público, a migração para E
 | API Fastify | 3001 | `/api/livez` | `/api/readyz` (503 quando o banco cai) |
 | Dashboard Streamlit | 8501 | — | `/_stcore/health` |
 
+As dependências diretas do dashboard estão fixadas em `requirements.txt`, que o Streamlit Community Cloud também usa. As transitivas da imagem Docker estão em `constraints-dashboard.txt`.
+
 O endpoint legado `/api/health` foi mantido por compatibilidade e passou a responder 503 quando o banco está indisponível.
 
 ## 6. Migrações do banco
@@ -60,7 +62,7 @@ A migração inicial foi versionada em `server/prisma/migrations/`. Ela roda num
 
 1. Construir e publicar as imagens no ECR.
 2. Executar a tarefa `nautam-migrate`, que roda `prisma migrate deploy`.
-3. Verificar o código de saída da tarefa e interromper o deploy se ele for diferente de zero.
+3. Validar o resultado com `deploy/aws/run-migration.sh`: falhas de agendamento, ausência da tarefa ou do container `migrate`, `stopCode`, `stoppedReason` e `exitCode`. Qualquer falha interrompe o deploy e exibe os logs do CloudWatch.
 4. Atualizar o serviço da API.
 5. Testar `/api/readyz` no endereço público.
 
@@ -107,8 +109,10 @@ Nenhum recurso é criado antes da estimativa mensal. O script `deploy/aws/estima
 
 ```bash
 python3 deploy/aws/estimar_custos.py
-python3 deploy/aws/estimar_custos.py --com-dashboard
+python3 deploy/aws/estimar_custos.py --com-dashboard --detalhes
 ```
+
+O script falha em vez de escolher um preço quando um item tem mais de um preço possível ou uma unidade inesperada. A opção `--detalhes` imprime o `usagetype`, a unidade e a descrição de cada preço usado. Essa saída serve de evidência para a revisão, e nenhuma estimativa autoriza gasto sem ela.
 
 O script cobre Fargate, ALB, IPv4 públicos, RDS, armazenamento gp3, Secrets Manager, CloudWatch Logs e ECR. Amplify e transferência de dados dependem do uso e ficam listados à parte.
 

@@ -5,7 +5,10 @@ Compara sa-east-1 (São Paulo) e us-east-1 (Virgínia), 730 h/mês, preços sob 
 Rodar no AWS CloudShell (já tem AWS CLI e Python):
 
     python3 deploy/aws/estimar_custos.py
-    python3 deploy/aws/estimar_custos.py --com-dashboard
+    python3 deploy/aws/estimar_custos.py --com-dashboard --detalhes
+
+O script falha, em vez de chutar, se um item tiver mais de um preço possível
+ou uma unidade inesperada. A saída de --detalhes serve de evidência para a revisão.
 
 Só faz chamadas de leitura à Price List API (gratuita). Não cria recursos.
 Itens de uso variável (Amplify, transferência de dados) ficam fora do total
@@ -43,55 +46,89 @@ def get_products(service, filtros):
             return itens
 
 
-def preco_usd(produto):
-    """Primeiro preço sob demanda > 0 (primeira faixa, quando houver faixas)."""
+def dimensoes_usd(produto):
+    """Todas as dimensões de preço sob demanda > 0: (preço, unidade, descrição, beginRange)."""
+    out = []
     for termo in produto["terms"].get("OnDemand", {}).values():
-        dims = sorted(termo["priceDimensions"].values(),
-                      key=lambda d: float(d.get("beginRange", "0") or 0))
-        for d in dims:
+        for d in termo["priceDimensions"].values():
             v = float(d["pricePerUnit"].get("USD", "0"))
             if v > 0:
-                return v
-    return None
+                out.append((v, d.get("unit", ""), d.get("description", ""),
+                            float(d.get("beginRange", "0") or 0)))
+    return out
 
 
-def achar(service, filtros, cond=lambda attrs: True, nome=""):
+EVIDENCIAS = []
+
+
+def achar(service, filtros, cond, unidades, nome, regiao):
+    """Exige exatamente um preço distinto, com unidade esperada; senão, falha.
+
+    Para preços em faixas (ex.: CloudWatch), usa a primeira faixa (beginRange 0),
+    que é a relevante para o volume baixo da POC.
+    """
+    candidatos = []
     for p in get_products(service, filtros):
         attrs = p["product"].get("attributes", {})
-        if cond(attrs):
-            v = preco_usd(p)
-            if v is not None:
-                return v
-    raise SystemExit(f"Preço não encontrado: {nome} {filtros}")
+        if not cond(attrs):
+            continue
+        dims = dimensoes_usd(p)
+        if not dims:
+            continue
+        primeira = min(dims, key=lambda d: d[3])
+        candidatos.append((primeira, attrs.get("usagetype", "?")))
+    if not candidatos:
+        raise SystemExit(f"[{regiao}] Preço não encontrado: {nome} {filtros}")
+    unidades_ok = {u.lower() for u in unidades}
+    ruins = [c for c in candidatos if c[0][1].lower() not in unidades_ok]
+    if ruins:
+        det = "; ".join(f"{ut}: unidade={d[1]!r}" for d, ut in ruins)
+        raise SystemExit(f"[{regiao}] Unidade inesperada para {nome} (esperado {unidades}): {det}")
+    precos_distintos = {round(d[0], 10) for d, _ in candidatos}
+    if len(precos_distintos) != 1:
+        det = "; ".join(f"{ut}: {d[0]} USD/{d[1]} ({d[2]})" for d, ut in candidatos)
+        raise SystemExit(f"[{regiao}] Ambíguo: {len(precos_distintos)} preços para {nome}. "
+                         f"Refine o filtro. Candidatos: {det}")
+    (preco, unidade, descricao, _), usagetype = candidatos[0]
+    EVIDENCIAS.append((regiao, nome, usagetype, unidade, preco, descricao))
+    return preco
 
 
 def precos(regiao):
     rc = {"regionCode": regiao}
-    ut = lambda frag, excl=(): (lambda a: frag in a.get("usagetype", "")
-                                and not any(x in a.get("usagetype", "") for x in excl))
+    def ut(frag, excl=()):
+        return lambda a: (frag in a.get("usagetype", "")
+                          and not any(x in a.get("usagetype", "") for x in excl))
+    todos = lambda a: True
     return {
         "fargate_vcpu_h": achar("AmazonECS", rc,
-                                ut("Fargate-vCPU-Hours:perCPU", ("ARM", "Windows", "Spot")), "Fargate vCPU"),
+                                ut("Fargate-vCPU-Hours:perCPU", ("ARM", "Windows", "Spot")),
+                                ["hours", "hrs"], "Fargate vCPU-hora", regiao),
         "fargate_gb_h": achar("AmazonECS", rc,
-                              ut("Fargate-GB-Hours", ("ARM", "Windows", "Spot", "Ephemeral")), "Fargate GB"),
+                              ut("Fargate-GB-Hours", ("ARM", "Windows", "Spot", "Ephemeral")),
+                              ["hours", "hrs"], "Fargate GB-hora", regiao),
         "alb_h": achar("AWSELB", {**rc, "productFamily": "Load Balancer-Application"},
-                       ut("LoadBalancerUsage"), "ALB hora"),
+                       ut("LoadBalancerUsage"), ["hrs", "hours"], "ALB hora", regiao),
         "alb_lcu_h": achar("AWSELB", {**rc, "productFamily": "Load Balancer-Application"},
-                           ut("LCUUsage"), "ALB LCU"),
+                           ut("LCUUsage"), ["lcu-hrs"], "ALB LCU-hora", regiao),
         "rds_h": achar("AmazonRDS", {**rc, "productFamily": "Database Instance",
                                      "instanceType": "db.t4g.micro",
                                      "databaseEngine": "PostgreSQL",
                                      "deploymentOption": "Single-AZ"},
-                       nome="RDS db.t4g.micro"),
+                       ut("InstanceUsage"), ["hrs", "hours"], "RDS db.t4g.micro hora", regiao),
         "rds_gp3_gb": achar("AmazonRDS", {**rc, "productFamily": "Database Storage",
                                           "volumeType": "General Purpose-GP3",
                                           "databaseEngine": "PostgreSQL",
                                           "deploymentOption": "Single-AZ"},
-                            nome="RDS gp3"),
-        "ipv4_h": achar("AmazonVPC", rc, ut("PublicIPv4:InUseAddress"), "IPv4 público"),
-        "secret_mes": achar("AWSSecretsManager", rc, ut("AWSSecretsManager-Secrets"), "Secret"),
-        "logs_gb": achar("AmazonCloudWatch", rc, ut("DataProcessing-Bytes", ("VendedLog",)), "Logs"),
-        "ecr_gb": achar("AmazonECR", rc, ut("TimedStorage-ByteHrs"), "ECR"),
+                            todos, ["gb-mo"], "RDS gp3 GB-mês", regiao),
+        "ipv4_h": achar("AmazonVPC", rc, ut("PublicIPv4:InUseAddress"),
+                        ["hrs", "hours"], "IPv4 público hora", regiao),
+        "secret_mes": achar("AWSSecretsManager", rc, ut("AWSSecretsManager-Secrets"),
+                            ["secrets", "secret-months", "month"], "Secret mês", regiao),
+        "logs_gb": achar("AmazonCloudWatch", rc, ut("DataProcessing-Bytes", ("VendedLog",)),
+                         ["gb"], "Logs ingestão GB", regiao),
+        "ecr_gb": achar("AmazonECR", rc, ut("TimedStorage-ByteHrs"),
+                        ["gb-mo"], "ECR GB-mês", regiao),
     }
 
 
@@ -116,6 +153,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--com-dashboard", action="store_true",
                     help="inclui a 2ª tarefa Fargate do Streamlit")
+    ap.add_argument("--detalhes", action="store_true",
+                    help="mostra o usagetype, a unidade e a descrição de cada preço usado")
     a = ap.parse_args()
     tabela = {r: custos(precos(r), a.com_dashboard) for r in REGIOES}
     itens = list(next(iter(tabela.values())).keys())
@@ -125,6 +164,10 @@ def main():
     for i in itens:
         print(f"{i:<28}" + "".join(f"{tabela[r][i]:>14.2f}" for r in REGIOES))
     print(f"{'TOTAL':<28}" + "".join(f"{sum(tabela[r].values()):>14.2f}" for r in REGIOES))
+    if a.detalhes:
+        print("\nEvidências (preço unitário usado em cada linha):")
+        for regiao, nome, usagetype, unidade, preco, desc in EVIDENCIAS:
+            print(f"  [{regiao}] {nome}: {preco} USD/{unidade} — {usagetype} — {desc}")
     print("\nFora do total (uso variável): Amplify Hosting (minutos de build, GB servidos),"
           "\ntransferência de dados para a internet, snapshots além do tamanho do banco."
           "\nSem NAT Gateway: as tarefas usam sub-rede pública com IP público e entrada"

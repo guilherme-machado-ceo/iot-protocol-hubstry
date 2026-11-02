@@ -60,34 +60,34 @@ jobs:
           docker push "$REGISTRY/$ECR_API_REPO:api-$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
 
-      # Migração numa tarefa avulsa do ECS, dentro da VPC.
-      # O RDS é privado: o runner do GitHub nunca se conecta ao banco.
-      - name: Migração Prisma (tarefa ECS avulsa)
+      - name: Registrar task definition da migração
+        id: migrate_td
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
           TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
           DATABASE_URL_SECRET_ARN: ${{ vars.DATABASE_URL_SECRET_ARN }}
-          SUBNETS: ${{ vars.ECS_SUBNETS }}                  # ex.: subnet-a,subnet-b
-          SECURITY_GROUPS: ${{ vars.ECS_MIGRATE_SECURITY_GROUPS }}
         run: |
           export MIGRATE_IMAGE="$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
           envsubst < deploy/aws/migrate-taskdef.json > /tmp/migrate-taskdef.json
           TD_ARN=$(aws ecs register-task-definition \
             --cli-input-json file:///tmp/migrate-taskdef.json \
             --query 'taskDefinition.taskDefinitionArn' --output text)
-          TASK_ARN=$(aws ecs run-task --cluster "$ECS_CLUSTER" --launch-type FARGATE \
-            --task-definition "$TD_ARN" \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=ENABLED}" \
-            --query 'tasks[0].taskArn' --output text)
-          echo "Tarefa de migração: $TASK_ARN"
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
-          EXIT_CODE=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" \
-            --query 'tasks[0].containers[0].exitCode' --output text)
-          echo "exitCode da migração: $EXIT_CODE"
-          test "$EXIT_CODE" = "0"
+          echo "arn=$TD_ARN" >> "$GITHUB_OUTPUT"
+
+      # Migração numa tarefa avulsa do ECS, dentro da VPC. As tarefas ficam em
+      # sub-redes públicas (IP público, entrada restrita por security group);
+      # o RDS não tem acesso público, então o runner nunca se conecta ao banco.
+      # O script valida failures, container, stopCode e exitCode e mostra os logs.
+      - name: Migração Prisma (tarefa ECS avulsa)
+        env:
+          TASK_DEFINITION_ARN: ${{ steps.migrate_td.outputs.arn }}
+          SUBNETS: ${{ vars.ECS_SUBNETS }}                  # ex.: subnet-a,subnet-b
+          SECURITY_GROUPS: ${{ vars.ECS_MIGRATE_SECURITY_GROUPS }}
+        run: deploy/aws/run-migration.sh
 
       - name: Atualizar serviço da API (ECS Express Mode)
+        id: api_deploy
         uses: aws-actions/amazon-ecs-deploy-express-service@v1
         with:
           service-name: ${{ vars.ECS_API_SERVICE }}
@@ -104,21 +104,25 @@ jobs:
           max-task-count: 2
           subnets: ${{ vars.ECS_SUBNETS }}
           security-groups: ${{ vars.ECS_API_SECURITY_GROUPS }}
-          # Formatos de environment-variables/secrets a confirmar na Etapa 4,
-          # conforme a documentação da action.
-          environment-variables: |
-            NODE_ENV=production
-            CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
-          secrets: |
-            DATABASE_URL=${{ vars.DATABASE_URL_SECRET_ARN }}
+          # A action espera arrays JSON: name/value e name/valueFrom.
+          environment-variables: >-
+            [{"name":"NODE_ENV","value":"production"},
+             {"name":"CORS_ORIGIN","value":"${{ vars.CORS_ORIGIN }}"}]
+          secrets: >-
+            [{"name":"DATABASE_URL","valueFrom":"${{ vars.DATABASE_URL_SECRET_ARN }}"}]
 
       - name: Teste pós-deploy (readiness)
+        env:
+          # Usa a URL pública configurada; na falta dela, o endpoint do ALB.
+          BASE_URL: ${{ vars.API_BASE_URL || steps.api_deploy.outputs.endpoint }}
         run: |
+          test -n "$BASE_URL" || { echo "::error::URL da API desconhecida"; exit 1; }
+          case "$BASE_URL" in http*) ;; *) BASE_URL="https://$BASE_URL" ;; esac
           for i in $(seq 1 30); do
-            curl -sf "${{ vars.API_BASE_URL }}/api/readyz" && exit 0
+            curl -sf "$BASE_URL/api/readyz" && exit 0
             sleep 10
           done
-          echo "API não ficou pronta"; exit 1
+          echo "::error::API não ficou pronta em $BASE_URL"; exit 1
 
       - name: Build e push — dashboard
         if: inputs.deploy_dashboard
