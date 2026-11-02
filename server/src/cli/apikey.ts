@@ -4,8 +4,8 @@
 //   node dist/cli/apikey.js create --name parceiro-x --scopes devices:read,devices:write \
 //     --secret-name /nautam/production/apikeys/parceiro-x [--expires-days 90]
 //
-// Desenvolvimento local e CI (recusado com NODE_ENV=production):
-//   node dist/cli/apikey.js create --name dev --scopes devices:read --stdout
+// Desenvolvimento local e CI (só com NODE_ENV=test ou development; qualquer outro valor, ou ausente, recusa):
+//   NODE_ENV=development node dist/cli/apikey.js create --name dev --scopes devices:read --stdout
 //
 //   node dist/cli/apikey.js list
 //   node dist/cli/apikey.js revoke --prefix AbC12345
@@ -46,7 +46,7 @@ async function create() {
     scopes: (arg('scopes') ?? '').split(','),
     expiresDays: days === undefined ? undefined : Number(days),
     entrega,
-    producao: process.env.NODE_ENV === 'production',
+    ambiente: process.env.NODE_ENV,
   }, { apiKey: prisma.apiKey, gravarSegredo })
 
   console.log(JSON.stringify(r, null, 2))

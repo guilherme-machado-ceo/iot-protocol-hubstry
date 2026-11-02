@@ -20,19 +20,19 @@ function deps(falhaSegredo = false) {
   return { d, criadas, revogadas, segredos }
 }
 
-const base: Omit<CriarOpcoes, 'entrega' | 'producao'> = { name: 'parceiro-x', scopes: ['harmonic:write'] }
+const base: Omit<CriarOpcoes, 'entrega' | 'ambiente'> = { name: 'parceiro-x', scopes: ['harmonic:write'] }
 const SM = { tipo: 'secrets-manager' as const, nomeSegredo: '/nautam/production/apikeys/parceiro-x' }
 
 describe('entrega segura da chave (auditoria da Luna)', () => {
   it('em produção, recusa stdout antes de criar qualquer chave', async () => {
     const { d, criadas } = deps()
-    await expect(criarChave({ ...base, entrega: { tipo: 'stdout' }, producao: true }, d)).rejects.toThrow(/CloudWatch/)
+    await expect(criarChave({ ...base, entrega: { tipo: 'stdout' }, ambiente: 'production' }, d)).rejects.toThrow(/só é aceito/)
     expect(criadas).toHaveLength(0)
   })
 
   it('com Secrets Manager, o resultado impresso não contém a chave', async () => {
     const { d, criadas, segredos } = deps()
-    const r = await criarChave({ ...base, entrega: SM, producao: true }, d)
+    const r = await criarChave({ ...base, entrega: SM, ambiente: 'production' }, d)
     expect(r.key).toBeUndefined()
     expect(r.secretArn).toMatch(/^arn:aws:secretsmanager:/)
     // O segredo guarda a chave, e ela confere com o hash gravado no banco.
@@ -43,25 +43,35 @@ describe('entrega segura da chave (auditoria da Luna)', () => {
 
   it('se gravar o segredo falhar, a chave é revogada (não fica chave órfã ativa)', async () => {
     const { d, criadas, revogadas } = deps(true)
-    await expect(criarChave({ ...base, entrega: SM, producao: true }, d)).rejects.toThrow(/revogada/)
+    await expect(criarChave({ ...base, entrega: SM, ambiente: 'production' }, d)).rejects.toThrow(/revogada/)
     expect(revogadas).toEqual([1])
   })
 
   it('nome de segredo fora da convenção é recusado', async () => {
     const { d, criadas } = deps()
-    await expect(criarChave({ ...base, entrega: { tipo: 'secrets-manager', nomeSegredo: 'qualquer' }, producao: true }, d)).rejects.toThrow(/apikeys/)
+    await expect(criarChave({ ...base, entrega: { tipo: 'secrets-manager', nomeSegredo: 'qualquer' }, ambiente: 'production' }, d)).rejects.toThrow(/apikeys/)
     expect(criadas).toHaveLength(0)
   })
 
   it('fora de produção, stdout entrega a chave (desenvolvimento e CI)', async () => {
     const { d, criadas } = deps()
-    const r = await criarChave({ ...base, entrega: { tipo: 'stdout' }, producao: false }, d)
-    expect(hashKey(r.key!)).toBe(criadas[0].keyHash)
+    for (const ambiente of ['test', 'development']) {
+      const r = await criarChave({ ...base, entrega: { tipo: 'stdout' }, ambiente }, d)
+      expect(hashKey(r.key!)).toBe(criadas.at(-1)!.keyHash)
+    }
+  })
+
+  it('fail-closed: stdout recusado com NODE_ENV ausente, vazio ou desconhecido', async () => {
+    const { d, criadas } = deps()
+    for (const ambiente of [undefined, '', 'prod', 'staging', 'Production', 'TEST', ' test']) {
+      await expect(criarChave({ ...base, entrega: { tipo: 'stdout' }, ambiente }, d)).rejects.toThrow(/só é aceito/)
+    }
+    expect(criadas).toHaveLength(0)
   })
 
   it('escopo inválido e validade não positiva são recusados', async () => {
     const { d } = deps()
-    await expect(criarChave({ ...base, scopes: ['admin'], entrega: SM, producao: true }, d)).rejects.toThrow(/inválidos/)
-    await expect(criarChave({ ...base, expiresDays: 0, entrega: SM, producao: true }, d)).rejects.toThrow(/positivo/)
+    await expect(criarChave({ ...base, scopes: ['admin'], entrega: SM, ambiente: 'production' }, d)).rejects.toThrow(/inválidos/)
+    await expect(criarChave({ ...base, expiresDays: 0, entrega: SM, ambiente: 'production' }, d)).rejects.toThrow(/positivo/)
   })
 })
