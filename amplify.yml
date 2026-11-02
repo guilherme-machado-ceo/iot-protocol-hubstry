@@ -1,0 +1,25 @@
+# AWS Amplify Hosting — frontend Next.js em monorepositório
+# IMPORTANTE: o app no Amplify precisa da variável de ambiente
+#   AMPLIFY_MONOREPO_APP_ROOT=demo-web/harmonic-demo
+# com o MESMO valor de appRoot abaixo, senão o build falha.
+version: 1
+applications:
+  - appRoot: demo-web/harmonic-demo
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm use 22 || true
+            - node -v
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*

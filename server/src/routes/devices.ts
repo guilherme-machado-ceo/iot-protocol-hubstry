@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../db'
 
 const RegisterBody = z.object({
   deviceId: z.string().min(1).max(128),

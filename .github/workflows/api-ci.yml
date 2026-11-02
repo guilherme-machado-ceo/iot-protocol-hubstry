@@ -1,0 +1,111 @@
+name: API CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'Dockerfile.dashboard'
+      - 'dashboard.py'
+      - 'requirements.txt'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'Dockerfile.dashboard'
+      - 'dashboard.py'
+      - 'requirements.txt'
+      - '.github/workflows/api-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: nautam
+        ports: [ '5432:5432' ]
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/nautam
+      SHADOW_DATABASE_URL: postgresql://ci:ci@localhost:5432/shadow
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Instalar dependências (lockfile)
+        run: npm ci
+
+      - name: Gerar Prisma Client e validar schema
+        run: |
+          npx prisma validate
+          npx prisma generate
+
+      - name: Typecheck e build
+        run: |
+          npm run typecheck
+          npm run build
+
+      - name: Aplicar migrações num PostgreSQL limpo
+        run: npx prisma migrate deploy
+
+      - name: Verificar que as migrações batem com o schema (sem drift)
+        run: |
+          psql "postgresql://ci:ci@localhost:5432/nautam" -c "CREATE DATABASE shadow;"
+          npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$SHADOW_DATABASE_URL" \
+            --exit-code
+
+      - name: Smoke test de saúde (livez, readyz, health)
+        env:
+          PORT: '3001'
+          CORS_ORIGIN: http://localhost:3000
+          NODE_ENV: production
+        run: |
+          node dist/index.js > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3001/api/livez && break; sleep 1; done
+          curl -sf localhost:3001/api/livez
+          curl -sf localhost:3001/api/readyz
+          curl -sf localhost:3001/api/health
+          curl -sf -X POST localhost:3001/api/devices/register \
+            -H 'content-type: application/json' \
+            -d '{"deviceId":"ci-device-1"}' || (cat /tmp/api.log; exit 1)
+
+  docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build da imagem da API (runtime)
+        run: docker build -f server/Dockerfile --target runtime -t nautam-api:ci server/
+
+      - name: Build da imagem de migração
+        run: docker build -f server/Dockerfile --target migrate -t nautam-migrate:ci server/
+
+      - name: Build da imagem do dashboard
+        run: docker build -f Dockerfile.dashboard -t nautam-dashboard:ci .
+
+      - name: Smoke test do dashboard
+        run: |
+          docker run -d --name dash -p 8501:8501 nautam-dashboard:ci
+          for i in $(seq 1 40); do curl -sf localhost:8501/_stcore/health && break; sleep 2; done
+          curl -sf localhost:8501/_stcore/health || (docker logs dash; exit 1)

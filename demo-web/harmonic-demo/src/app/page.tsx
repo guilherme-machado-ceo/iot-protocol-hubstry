@@ -179,7 +179,7 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-6">
               <a 
-                href="mailto:guilherme.ceo@hubstry.com"
+                href="mailto:guilhermemachado.ceo@hubstry.dev"
                 className="text-purple-300 hover:text-white transition-colors"
               >
                 Contact for Investment

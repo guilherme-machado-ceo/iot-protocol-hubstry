@@ -1,0 +1,147 @@
+name: Deploy AWS
+
+# Etapa 1: só disparo manual. O gatilho "push" na main será ligado
+# depois da homologação, com aprovação explícita no circuito de revisão.
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_dashboard:
+        description: 'Publicar também o dashboard Streamlit no ECS (custo extra: 2ª tarefa Fargate)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-aws-production
+  cancel-in-progress: false
+
+# Permissões mínimas por padrão; o OIDC só é liberado no job que assume o papel.
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # O Environment "production" exige aprovação e só aceita a branch main.
+    # Com Environment, o "sub" do token OIDC vira:
+    #   repo:guilherme-machado-ceo/iot-protocol-hubstry:environment:production
+    # A política de confiança do papel IAM deve usar exatamente esse valor.
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_API_REPO: ${{ vars.ECR_API_REPO }}               # ex.: nautam/api
+      ECR_DASHBOARD_REPO: ${{ vars.ECR_DASHBOARD_REPO }}   # ex.: nautam/dashboard
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Credenciais AWS via OIDC (sem chave estática)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login no ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build e push — API e migração
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -f server/Dockerfile --target runtime \
+            -t "$REGISTRY/$ECR_API_REPO:api-$IMAGE_TAG" server/
+          docker build -f server/Dockerfile --target migrate \
+            -t "$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG" server/
+          docker push "$REGISTRY/$ECR_API_REPO:api-$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
+
+      # Migração numa tarefa avulsa do ECS, dentro da VPC.
+      # O RDS é privado: o runner do GitHub nunca se conecta ao banco.
+      - name: Migração Prisma (tarefa ECS avulsa)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
+          TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ vars.DATABASE_URL_SECRET_ARN }}
+          SUBNETS: ${{ vars.ECS_SUBNETS }}                  # ex.: subnet-a,subnet-b
+          SECURITY_GROUPS: ${{ vars.ECS_MIGRATE_SECURITY_GROUPS }}
+        run: |
+          export MIGRATE_IMAGE="$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
+          envsubst < deploy/aws/migrate-taskdef.json > /tmp/migrate-taskdef.json
+          TD_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/migrate-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          TASK_ARN=$(aws ecs run-task --cluster "$ECS_CLUSTER" --launch-type FARGATE \
+            --task-definition "$TD_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=ENABLED}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Tarefa de migração: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "exitCode da migração: $EXIT_CODE"
+          test "$EXIT_CODE" = "0"
+
+      - name: Atualizar serviço da API (ECS Express Mode)
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          service-name: ${{ vars.ECS_API_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          image: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_API_REPO }}:api-${{ github.sha }}
+          execution-role-arn: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
+          infrastructure-role-arn: ${{ vars.ECS_INFRASTRUCTURE_ROLE_ARN }}
+          task-role-arn: ${{ vars.ECS_TASK_ROLE_ARN }}
+          container-port: 3001
+          health-check-path: /api/readyz
+          cpu: 256
+          memory: 512
+          min-task-count: 1
+          max-task-count: 2
+          subnets: ${{ vars.ECS_SUBNETS }}
+          security-groups: ${{ vars.ECS_API_SECURITY_GROUPS }}
+          # Formatos de environment-variables/secrets a confirmar na Etapa 4,
+          # conforme a documentação da action.
+          environment-variables: |
+            NODE_ENV=production
+            CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
+          secrets: |
+            DATABASE_URL=${{ vars.DATABASE_URL_SECRET_ARN }}
+
+      - name: Teste pós-deploy (readiness)
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf "${{ vars.API_BASE_URL }}/api/readyz" && exit 0
+            sleep 10
+          done
+          echo "API não ficou pronta"; exit 1
+
+      - name: Build e push — dashboard
+        if: inputs.deploy_dashboard
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -f Dockerfile.dashboard -t "$REGISTRY/$ECR_DASHBOARD_REPO:$IMAGE_TAG" .
+          docker push "$REGISTRY/$ECR_DASHBOARD_REPO:$IMAGE_TAG"
+
+      - name: Atualizar serviço do dashboard (ECS Express Mode)
+        if: inputs.deploy_dashboard
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          service-name: ${{ vars.ECS_DASHBOARD_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          image: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_DASHBOARD_REPO }}:${{ github.sha }}
+          execution-role-arn: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
+          infrastructure-role-arn: ${{ vars.ECS_INFRASTRUCTURE_ROLE_ARN }}
+          container-port: 8501
+          health-check-path: /_stcore/health
+          cpu: 512
+          memory: 1024
+          min-task-count: 1
+          max-task-count: 1
+          subnets: ${{ vars.ECS_SUBNETS }}
+          security-groups: ${{ vars.ECS_DASHBOARD_SECURITY_GROUPS }}
