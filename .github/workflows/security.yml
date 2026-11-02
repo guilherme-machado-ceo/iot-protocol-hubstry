@@ -42,34 +42,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp' ]
-        
+        include:
+          - language: cpp
+            build-mode: manual
+          - language: javascript-typescript   # server/ (API) e demo-web/
+            build-mode: none
+          - language: python                  # dashboard, hale_core, hpg_core, security, sdk
+            build-mode: none
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
-      
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
-        
+        build-mode: ${{ matrix.build-mode }}
+
     - name: Setup C++ environment
+      if: matrix.language == 'cpp'
       uses: aminya/setup-cpp@v1
       with:
         compiler: gcc
         cmake: true
-        
+
     - name: Build project
+      if: matrix.language == 'cpp'
       run: |
         cd src
         mkdir -p build
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=Debug
         cmake --build . --config Debug
-        
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
-      
+      with:
+        category: "/language:${{ matrix.language }}"
+
   secret-scan:
     name: Secret Scanning
     runs-on: ubuntu-latest

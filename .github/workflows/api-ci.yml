@@ -156,3 +156,22 @@ jobs:
           docker run -d --name dash -p 8501:8501 nautam-dashboard:ci
           for i in $(seq 1 40); do curl -sf localhost:8501/_stcore/health && break; sleep 2; done
           curl -sf localhost:8501/_stcore/health || (docker logs dash; exit 1)
+
+      # Varredura das imagens que vão para produção.
+      # Bloqueia só vulnerabilidades CRÍTICAS com correção disponível;
+      # as de severidade alta aparecem no relatório sem bloquear o merge.
+      - name: Varredura de vulnerabilidades das imagens (Trivy)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy --version
+          for img in nautam-api:ci nautam-migrate:ci nautam-dashboard:ci; do
+            echo "::group::$img (CRITICAL e HIGH, relatório)"
+            trivy image --quiet --ignore-unfixed --severity CRITICAL,HIGH --exit-code 0 "$img"
+            echo "::endgroup::"
+          done
+          falhou=0
+          for img in nautam-api:ci nautam-migrate:ci nautam-dashboard:ci; do
+            trivy image --quiet --ignore-unfixed --severity CRITICAL --exit-code 1 "$img" >/dev/null \
+              || { echo "::error::$img tem vulnerabilidade CRÍTICA com correção disponível"; falhou=1; }
+          done
+          exit $falhou
