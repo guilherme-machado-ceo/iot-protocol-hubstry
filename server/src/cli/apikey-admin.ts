@@ -16,7 +16,9 @@ export interface CriarOpcoes {
   scopes: string[]
   expiresDays?: number
   entrega: Entrega
-  producao: boolean
+  // Valor de NODE_ENV. Fail-closed: stdout só com 'test' ou 'development';
+  // ausente, vazio, 'production' ou qualquer outro valor recusa.
+  ambiente: string | undefined
 }
 
 export interface Dependencias {
@@ -37,6 +39,9 @@ export interface Resultado {
   key?: string // presente só na entrega por stdout
 }
 
+// Únicos ambientes em que a chave pode ir para a saída padrão.
+const AMBIENTES_STDOUT = ['test', 'development']
+
 // Nome de segredo aceito: /nautam/<ambiente>/apikeys/<nome>
 const NOME_SEGREDO = /^\/nautam\/[a-z0-9-]+\/apikeys\/[A-Za-z0-9._-]{1,64}$/
 
@@ -49,8 +54,8 @@ export function validarOpcoes(o: CriarOpcoes): Scope[] {
   if (o.expiresDays !== undefined && (!Number.isFinite(o.expiresDays) || o.expiresDays <= 0)) {
     throw new Error('--expires-days deve ser positivo')
   }
-  if (o.entrega.tipo === 'stdout' && o.producao) {
-    throw new Error('Em produção a chave não pode ir para stdout (acabaria no CloudWatch Logs). Use --secret-name.')
+  if (o.entrega.tipo === 'stdout' && !AMBIENTES_STDOUT.includes(o.ambiente ?? '')) {
+    throw new Error(`--stdout só é aceito com NODE_ENV=test ou development (atual: ${o.ambiente ?? 'ausente'}). Fora disso a chave poderia acabar em logs, como o CloudWatch. Use --secret-name.`)
   }
   if (o.entrega.tipo === 'secrets-manager' && !NOME_SEGREDO.test(o.entrega.nomeSegredo)) {
     throw new Error('--secret-name deve seguir /nautam/<ambiente>/apikeys/<nome>')
