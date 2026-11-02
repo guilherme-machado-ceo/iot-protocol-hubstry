@@ -16,6 +16,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/livez', {
     schema: {
       tags: ['health'],
+      security: [],
       summary: 'Liveness probe (processo vivo)',
       response: {
         200: {
@@ -33,6 +34,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/readyz', {
     schema: {
       tags: ['health'],
+      security: [],
       summary: 'Readiness probe (banco acessível)',
       response: {
         200: {
@@ -57,6 +59,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', {
     schema: {
       tags: ['health'],
+      security: [],
       summary: 'Health check detalhado',
       response: {
         200: {
@@ -92,6 +95,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/metrics', {
     schema: {
       tags: ['health'],
+      security: [],
       summary: 'Prometheus-compatible metrics (text format)',
       produces: ['text/plain'],
     },

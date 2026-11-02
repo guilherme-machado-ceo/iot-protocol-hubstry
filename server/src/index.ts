@@ -41,6 +41,12 @@ async function build() {
         description: 'REST API for the Harmonic IoT Protocol server',
         version: '1.0.0',
       },
+      components: {
+        securitySchemes: {
+          apiKey: { type: 'apiKey', in: 'header', name: 'x-api-key' },
+        },
+      },
+      security: [{ apiKey: [] }],
       tags: [
         { name: 'health', description: 'Health and readiness endpoints' },
         { name: 'harmonic', description: 'Harmonic protocol simulation' },

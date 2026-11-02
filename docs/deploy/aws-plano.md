@@ -56,6 +56,21 @@ As dependências diretas do dashboard estão fixadas em `requirements.txt`, que 
 
 O endpoint legado `/api/health` foi mantido por compatibilidade e passou a responder 503 quando o banco está indisponível.
 
+## 5.1 Autenticação da API
+
+Nenhuma rota de dados fica aberta. As rotas de saúde (`/api/livez`, `/api/readyz`, `/api/health`, `/api/metrics`) e a documentação (`/docs`) dispensam credencial; todas as demais exigem uma chave de API com o escopo correspondente.
+
+| Rota | Escopo |
+|---|---|
+| `POST /api/devices/register` | `devices:write` |
+| `GET /api/devices`, `GET /api/devices/:deviceId` | `devices:read` |
+| `POST /api/harmonic/simulate` | `harmonic:write` |
+| `POST /api/harmonic/fft` | `harmonic:compute` |
+
+A chave segue o formato `nk_<prefixo>_<segredo>` e é enviada no cabeçalho `x-api-key` ou em `Authorization: Bearer`. O banco guarda só o prefixo e o SHA-256 da chave; a chave em claro aparece uma única vez, na criação. Cada chave tem escopos, expiração opcional e revogação. A gestão é feita pelo comando `npm run apikey -- create | list | revoke`. Em produção, ele roda como tarefa avulsa do ECS com a imagem da API, porque o banco é privado.
+
+O HSL é parte do protocolo e não substitui a autenticação da API. A identidade de dispositivos reais fica para a Etapa 6, com o AWS IoT Core.
+
 ## 6. Migrações do banco
 
 A migração inicial foi versionada em `server/prisma/migrations/`. Ela roda numa tarefa avulsa do ECS dentro da VPC (Virtual Private Cloud, rede privada virtual), e nunca a partir do runner do GitHub, porque o RDS é privado. A sequência de cada deploy é:

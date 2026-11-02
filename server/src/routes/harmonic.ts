@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../db'
+import { requireScope } from '../auth'
 
 const SimulateBody = z.object({
   fundamentalFreq: z.number().positive().default(1000),
@@ -10,6 +11,7 @@ const SimulateBody = z.object({
 
 export async function harmonicRoutes(app: FastifyInstance) {
   app.post('/simulate', {
+    preHandler: requireScope('harmonic:write'),
     schema: {
       tags: ['harmonic'],
       summary: 'Simulate harmonic protocol encoding',
@@ -49,6 +51,7 @@ export async function harmonicRoutes(app: FastifyInstance) {
   })
 
   app.post('/fft', {
+    preHandler: requireScope('harmonic:compute'),
     schema: {
       tags: ['harmonic'],
       summary: 'Compute FFT spectrum for a harmonic signal',

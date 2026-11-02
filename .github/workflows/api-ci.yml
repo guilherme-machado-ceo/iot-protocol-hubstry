@@ -60,9 +60,10 @@ jobs:
           npx prisma validate
           npx prisma generate
 
-      - name: Typecheck e build
+      - name: Typecheck, testes unitários e build
         run: |
           npm run typecheck
+          npm test
           npm run build
 
       - name: Aplicar migrações num PostgreSQL limpo
@@ -77,20 +78,44 @@ jobs:
             --shadow-database-url "$SHADOW_DATABASE_URL" \
             --exit-code
 
-      - name: Smoke test de saúde (livez, readyz, health)
+      - name: Smoke test de saúde e autenticação
         env:
           PORT: '3001'
           CORS_ORIGIN: http://localhost:3000
           NODE_ENV: production
         run: |
+          trap 'echo "--- log da API"; cat /tmp/api.log' ERR
           node dist/index.js > /tmp/api.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:3001/api/livez && break; sleep 1; done
           curl -sf localhost:3001/api/livez
           curl -sf localhost:3001/api/readyz
           curl -sf localhost:3001/api/health
-          curl -sf -X POST localhost:3001/api/devices/register \
-            -H 'content-type: application/json' \
-            -d '{"deviceId":"ci-device-1"}' || (cat /tmp/api.log; exit 1)
+
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          REG='{"deviceId":"ci-device-1"}'
+          URL=localhost:3001/api/devices/register
+
+          # Sem chave: 401
+          test "$(code -X POST $URL -H 'content-type: application/json' -d "$REG")" = 401
+          # Chave malformada: 401
+          test "$(code -X POST $URL -H 'x-api-key: nk_invalida' -H 'content-type: application/json' -d "$REG")" = 401
+
+          # Chave só de leitura: 403 na escrita, 200 na leitura
+          RO=$(npm run -s apikey -- create --name ci-leitura --scopes devices:read | jq -r .key)
+          test "$(code -X POST $URL -H "x-api-key: $RO" -H 'content-type: application/json' -d "$REG")" = 403
+          test "$(code localhost:3001/api/devices -H "x-api-key: $RO")" = 200
+
+          # Chave de escrita: 201, também via Authorization: Bearer
+          RW=$(npm run -s apikey -- create --name ci-escrita --scopes devices:write | jq -r .key)
+          test "$(code -X POST $URL -H "x-api-key: $RW" -H 'content-type: application/json' -d "$REG")" = 201
+          test "$(code -X POST $URL -H "Authorization: Bearer $RW" -H 'content-type: application/json' -d "$REG")" = 201
+
+          # Revogação: a chave deixa de valer
+          npm run -s apikey -- revoke --prefix "$(echo "$RW" | cut -d_ -f2)"
+          test "$(code -X POST $URL -H "x-api-key: $RW" -H 'content-type: application/json' -d "$REG")" = 401
+
+          npm run -s apikey -- list
+          echo "Autenticação verificada."
 
   docker-images:
     runs-on: ubuntu-latest
