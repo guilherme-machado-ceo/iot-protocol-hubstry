@@ -71,6 +71,10 @@ As rotas harmônicas seguem o contrato do núcleo Python: razões a/b do conjunt
 
 A chave segue o formato `nk_<prefixo>_<segredo>` e é enviada no cabeçalho `x-api-key` ou em `Authorization: Bearer`. O banco guarda só o prefixo e o SHA-256 da chave; a chave em claro aparece uma única vez, na criação. Cada chave tem escopos, expiração opcional e revogação. A gestão é feita pelo comando `npm run apikey -- create | list | revoke`. Em produção, ele roda como tarefa avulsa do ECS com a imagem da API, porque o banco é privado.
 
+Em produção, a chave criada nunca vai para a saída padrão, porque tudo o que a tarefa imprime fica no CloudWatch Logs. O comando exige `--secret-name /nautam/production/apikeys/<nome>`, grava a chave num segredo novo do Secrets Manager e imprime só o ARN (Amazon Resource Name, identificador do recurso) do segredo. Se a gravação falhar, a chave recém-criada é revogada, para não restar chave ativa irrecuperável. A opção `--stdout` existe só para desenvolvimento local e CI e é recusada com `NODE_ENV=production`. Quem precisa entregar a chave a um parceiro a lê com `aws secretsmanager get-secret-value --secret-id <ARN>`.
+
+A tarefa do CLI usa um papel IAM próprio, separado do papel da API, com `secretsmanager:CreateSecret` e `secretsmanager:TagResource` restritos a `arn:aws:secretsmanager:<região>:<conta>:secret:/nautam/production/apikeys/*`. A API em execução não ganha permissão de criar segredos.
+
 O HSL é parte do protocolo e não substitui a autenticação da API. A identidade de dispositivos reais fica para a Etapa 6, com o AWS IoT Core.
 
 ## 6. Migrações do banco

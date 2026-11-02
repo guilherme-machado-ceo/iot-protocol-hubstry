@@ -27,6 +27,25 @@ CASOS = [
                    {"a": 5, "b": 3, "amplitude": 0.5, "phase": 1.0},
                    {"a": 11, "b": 7, "amplitude": 0.25, "phase": 2.5}],
      "duration": 0.125, "sample_rate": 16384.0},
+    # Casos-limite pedidos na auditoria da Luna.
+    {"nome": "limite_extremos_de_h16", "f0": 1024.0,
+     "harmonics": [{"a": 1, "b": 16}, {"a": 15, "b": 16}, {"a": 16, "b": 15}, {"a": 16, "b": 1}],
+     "duration": 0.25, "sample_rate": 65536.0},
+    {"nome": "limite_um_componente", "f0": 512.0, "harmonics": [{"a": 1, "b": 1}],
+     "duration": 0.125, "sample_rate": 8192.0},
+    {"nome": "limite_12_canais_hpm10", "f0": 16384.0,
+     "harmonics": [{"a": ch["a"], "b": ch["b"]} for ch in get_channel_table()],
+     "duration": 1 / 32, "sample_rate": 131072.0},
+    {"nome": "limite_razoes_vizinhas", "f0": 1000.0,
+     "harmonics": [{"a": 16, "b": 15}, {"a": 15, "b": 14}, {"a": 14, "b": 13}],
+     "duration": 0.5, "sample_rate": 8000.0},
+    {"nome": "limite_amplitude_perto_do_limiar", "f0": 2048.0,
+     "harmonics": [{"a": 1, "b": 1, "amplitude": 1.0}, {"a": 3, "b": 2, "amplitude": 0.012},
+                   {"a": 5, "b": 4, "amplitude": 0.008}],
+     "duration": 0.125, "sample_rate": 16384.0},
+    {"nome": "limite_n_impar_dft_ingenua", "f0": 700.0,
+     "harmonics": [{"a": 2, "b": 1}, {"a": 7, "b": 5}],
+     "duration": 0.1001, "sample_rate": 9990.0},
 ]
 
 
