@@ -65,7 +65,9 @@ Nenhuma rota de dados fica aberta. As rotas de saúde (`/api/livez`, `/api/ready
 | `POST /api/devices/register` | `devices:write` |
 | `GET /api/devices`, `GET /api/devices/:deviceId` | `devices:read` |
 | `POST /api/harmonic/simulate` | `harmonic:write` |
-| `POST /api/harmonic/fft` | `harmonic:compute` |
+| `GET /api/harmonic/hn`, `GET /api/harmonic/channels`, `POST /api/harmonic/fft` | `harmonic:compute` |
+
+As rotas harmônicas seguem o contrato do núcleo Python: razões a/b do conjunto H16 (159 razões irredutíveis com a, b ≤ 16) e canais do HPM 1.0, em `server/src/protocol/h16.ts`. A equivalência com `hpg_core` é verificada no CI por fixtures regeneradas a partir do próprio Python. A única diferença deliberada: a API recusa componentes acima da frequência de Nyquist, que o núcleo Python decodificaria com aliasing.
 
 A chave segue o formato `nk_<prefixo>_<segredo>` e é enviada no cabeçalho `x-api-key` ou em `Authorization: Bearer`. O banco guarda só o prefixo e o SHA-256 da chave; a chave em claro aparece uma única vez, na criação. Cada chave tem escopos, expiração opcional e revogação. A gestão é feita pelo comando `npm run apikey -- create | list | revoke`. Em produção, ele roda como tarefa avulsa do ECS com a imagem da API, porque o banco é privado.
 

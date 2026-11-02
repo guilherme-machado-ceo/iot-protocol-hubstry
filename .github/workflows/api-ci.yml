@@ -9,6 +9,7 @@ on:
       - 'dashboard.py'
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
+      - 'hpg_core/**'
       - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [ main ]
@@ -18,6 +19,7 @@ on:
       - 'dashboard.py'
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
+      - 'hpg_core/**'
       - '.github/workflows/api-ci.yml'
 
 permissions:
@@ -59,6 +61,18 @@ jobs:
         run: |
           npx prisma validate
           npx prisma generate
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Fixtures de equivalência regeneradas a partir do núcleo Python
+        working-directory: .
+        run: |
+          pip install -q -r requirements.txt -c constraints-dashboard.txt
+          python3 server/tests/fixtures/gerar_fixtures_h16.py
+          git diff --exit-code server/tests/fixtures/h16-python.json \
+            || { echo "::error::O núcleo Python mudou: regenere server/tests/fixtures/h16-python.json e revise o porte TypeScript."; exit 1; }
 
       - name: Typecheck, testes unitários e build
         run: |
@@ -113,6 +127,12 @@ jobs:
           # Revogação: a chave deixa de valer
           npm run -s apikey -- revoke --prefix "$(echo "$RW" | cut -d_ -f2)"
           test "$(code -X POST $URL -H "x-api-key: $RW" -H 'content-type: application/json' -d "$REG")" = 401
+
+          # Contrato H16 com chave de cálculo
+          RC=$(npm run -s apikey -- create --name ci-calculo --scopes harmonic:compute | jq -r .key)
+          test "$(curl -sf localhost:3001/api/harmonic/hn -H "x-api-key: $RC" | jq .cardinality)" = 159
+          curl -sf -X POST localhost:3001/api/harmonic/fft -H "x-api-key: $RC" -H 'content-type: application/json' -d '{}' \
+            | jq -e '[.peaks[].closest_ratio] | sort == ["1/1","2/1","3/1","3/2","4/3","5/4"]'
 
           npm run -s apikey -- list
           echo "Autenticação verificada."
