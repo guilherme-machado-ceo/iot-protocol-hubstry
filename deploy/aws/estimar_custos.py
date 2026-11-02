@@ -101,7 +101,9 @@ def precos(regiao):
     # (ex.: "SAE1-LoadBalancerUsage" em sa-east-1, "LoadBalancerUsage" em us-east-1).
     # Evita variantes como Outposts, Trust Store, ARM, Windows e Spot.
     def ut(sufixo):
-        padrao = re.compile(r"(?:[A-Z]{2,4}\d?-)?" + re.escape(sufixo))
+        # Prefixos de região têm 3 letras + 1 dígito (SAE1, USE2, EUC1...).
+        # "TS-" (Trust Store) e "Outposts-" não casam com esse formato.
+        padrao = re.compile(r"(?:[A-Z]{3}\d-)?" + re.escape(sufixo))
         return lambda a: padrao.fullmatch(a.get("usagetype", "")) is not None
     return {
         "fargate_vcpu_h": achar("AmazonECS", rc,
