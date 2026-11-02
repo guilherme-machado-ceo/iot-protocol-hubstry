@@ -16,6 +16,7 @@ e são listados como observação.
 """
 import argparse
 import json
+import re
 import subprocess
 import sys
 
@@ -96,16 +97,18 @@ def achar(service, filtros, cond, unidades, nome, regiao):
 
 def precos(regiao):
     rc = {"regionCode": regiao}
-    def ut(frag, excl=()):
-        return lambda a: (frag in a.get("usagetype", "")
-                          and not any(x in a.get("usagetype", "") for x in excl))
-    todos = lambda a: True
+    # Correspondência EXATA do usagetype, com prefixo de região opcional
+    # (ex.: "SAE1-LoadBalancerUsage" em sa-east-1, "LoadBalancerUsage" em us-east-1).
+    # Evita variantes como Outposts, Trust Store, ARM, Windows e Spot.
+    def ut(sufixo):
+        padrao = re.compile(r"(?:[A-Z]{2,4}\d?-)?" + re.escape(sufixo))
+        return lambda a: padrao.fullmatch(a.get("usagetype", "")) is not None
     return {
         "fargate_vcpu_h": achar("AmazonECS", rc,
-                                ut("Fargate-vCPU-Hours:perCPU", ("ARM", "Windows", "Spot")),
+                                ut("Fargate-vCPU-Hours:perCPU"),
                                 ["hours", "hrs"], "Fargate vCPU-hora", regiao),
         "fargate_gb_h": achar("AmazonECS", rc,
-                              ut("Fargate-GB-Hours", ("ARM", "Windows", "Spot", "Ephemeral")),
+                              ut("Fargate-GB-Hours"),
                               ["hours", "hrs"], "Fargate GB-hora", regiao),
         "alb_h": achar("AWSELB", {**rc, "productFamily": "Load Balancer-Application"},
                        ut("LoadBalancerUsage"), ["hrs", "hours"], "ALB hora", regiao),
@@ -115,17 +118,17 @@ def precos(regiao):
                                      "instanceType": "db.t4g.micro",
                                      "databaseEngine": "PostgreSQL",
                                      "deploymentOption": "Single-AZ"},
-                       ut("InstanceUsage"), ["hrs", "hours"], "RDS db.t4g.micro hora", regiao),
+                       ut("InstanceUsage:db.t4g.micro"), ["hrs", "hours"], "RDS db.t4g.micro hora", regiao),
         "rds_gp3_gb": achar("AmazonRDS", {**rc, "productFamily": "Database Storage",
                                           "volumeType": "General Purpose-GP3",
                                           "databaseEngine": "PostgreSQL",
                                           "deploymentOption": "Single-AZ"},
-                            todos, ["gb-mo"], "RDS gp3 GB-mês", regiao),
+                            ut("RDS:GP3-Storage"), ["gb-mo"], "RDS gp3 GB-mês", regiao),
         "ipv4_h": achar("AmazonVPC", rc, ut("PublicIPv4:InUseAddress"),
                         ["hrs", "hours"], "IPv4 público hora", regiao),
         "secret_mes": achar("AWSSecretsManager", rc, ut("AWSSecretsManager-Secrets"),
                             ["secrets", "secret-months", "month"], "Secret mês", regiao),
-        "logs_gb": achar("AmazonCloudWatch", rc, ut("DataProcessing-Bytes", ("VendedLog",)),
+        "logs_gb": achar("AmazonCloudWatch", rc, ut("DataProcessing-Bytes"),
                          ["gb"], "Logs ingestão GB", regiao),
         "ecr_gb": achar("AmazonECR", rc, ut("TimedStorage-ByteHrs"),
                         ["gb-mo"], "ECR GB-mês", regiao),
