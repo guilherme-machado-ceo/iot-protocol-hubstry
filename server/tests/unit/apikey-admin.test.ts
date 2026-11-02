@@ -4,11 +4,11 @@ import { hashKey } from '../../src/keys'
 
 function deps(falhaSegredo = false) {
   const criadas: { prefix: string; keyHash: string }[] = []
-  const revogadas: string[] = []
+  const revogadas: number[] = []
   const segredos: { nome: string; valor: string }[] = []
   const d: Dependencias = {
     apiKey: {
-      create: vi.fn(async ({ data }) => { criadas.push(data); return { id: data.prefix } }),
+      create: vi.fn(async ({ data }) => { criadas.push(data); return { id: criadas.length } }),
       update: vi.fn(async ({ where }) => { revogadas.push(where.id); return {} }),
     },
     gravarSegredo: vi.fn(async (nome: string, valor: string) => {
@@ -44,7 +44,7 @@ describe('entrega segura da chave (auditoria da Luna)', () => {
   it('se gravar o segredo falhar, a chave é revogada (não fica chave órfã ativa)', async () => {
     const { d, criadas, revogadas } = deps(true)
     await expect(criarChave({ ...base, entrega: SM, producao: true }, d)).rejects.toThrow(/revogada/)
-    expect(revogadas).toEqual([criadas[0].prefix])
+    expect(revogadas).toEqual([1])
   })
 
   it('nome de segredo fora da convenção é recusado', async () => {
