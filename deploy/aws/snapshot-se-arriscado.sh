@@ -6,6 +6,12 @@
 # nova contiver operação destrutiva ou que reescreve dados, tira um
 # snapshot manual do RDS e espera ficar disponível antes de seguir.
 #
+# Fail-closed: na dúvida, o deploy para ou o snapshot é tirado.
+# - Só "ParameterNotFound" conta como primeiro deploy. Acesso negado,
+#   timeout ou falha de rede ao ler o SSM interrompem o deploy.
+# - Migração já aplicada que foi alterada, removida ou renomeada
+#   interrompe o deploy: o Prisma registra checksum das aplicadas.
+#
 # Modos (variável MODO): auto (padrão) | sempre | nunca
 #
 # Variáveis obrigatórias: DB_INSTANCE_ID, AWS_REGION, PARAM_ULTIMO_DEPLOY
@@ -16,11 +22,29 @@ set -euo pipefail
 MODO="${MODO:-auto}"
 PASTA="server/prisma/migrations"
 # Operações que destroem ou reescrevem dados, ou quebram a versão anterior da API.
-PADRAO='DROP[[:space:]]+(TABLE|COLUMN|SCHEMA|TYPE)|TRUNCATE|DELETE[[:space:]]+FROM|UPDATE[[:space:]]+"|ALTER[[:space:]]+COLUMN[^;]*[[:space:]]TYPE|RENAME[[:space:]]+(COLUMN|TO)'
+# UPDATE só no início da linha (com ou sem aspas), para não confundir com
+# "ON UPDATE CASCADE" das chaves estrangeiras.
+PADRAO='DROP[[:space:]]+(TABLE|COLUMN|SCHEMA|TYPE|INDEX|CONSTRAINT)|TRUNCATE|DELETE[[:space:]]+FROM|^[[:space:]]*UPDATE[[:space:]]|ALTER[[:space:]]+COLUMN[^;]*[[:space:]]TYPE|ALTER[[:space:]]+COLUMN[^;]*SET[[:space:]]+NOT[[:space:]]+NULL|RENAME[[:space:]]+(COLUMN|TO)'
 
 saida() {
   echo "snapshot=$1"
   if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "snapshot=$1" >> "$GITHUB_OUTPUT"; fi
+}
+
+# Lê o último deploy. Imprime o SHA, ou nada se o parâmetro não existir.
+# Qualquer outro erro encerra o script com código 1.
+ler_ultimo_deploy() {
+  local out err rc
+  err=$(mktemp)
+  set +e
+  out=$(aws ssm get-parameter --name "$PARAM_ULTIMO_DEPLOY" --query Parameter.Value --output text 2>"$err")
+  rc=$?
+  set -e
+  if [ $rc -eq 0 ]; then echo "$out"; rm -f "$err"; return 0; fi
+  if grep -q 'ParameterNotFound' "$err"; then rm -f "$err"; return 0; fi
+  echo "::error::Falha ao ler $PARAM_ULTIMO_DEPLOY no SSM (não é ParameterNotFound); deploy interrompido." >&2
+  cat "$err" >&2; rm -f "$err"
+  exit 1
 }
 
 decidir() {
@@ -31,9 +55,9 @@ decidir() {
     *) echo "::error::MODO inválido: $MODO"; exit 2 ;;
   esac
 
-  ULTIMO=$(aws ssm get-parameter --name "$PARAM_ULTIMO_DEPLOY" --query Parameter.Value --output text 2>/dev/null || true)
-  if [ -z "$ULTIMO" ] || [ "$ULTIMO" = "None" ]; then
-    echo "Sem registro de deploy anterior (primeiro deploy): banco ainda vazio, snapshot dispensado."
+  ULTIMO=$(ler_ultimo_deploy) || exit 1
+  if [ -z "$ULTIMO" ]; then
+    echo "Parâmetro de último deploy inexistente (primeiro deploy): banco ainda vazio, snapshot dispensado."
     return 1
   fi
   if ! git cat-file -e "${ULTIMO}^{commit}" 2>/dev/null; then
@@ -41,7 +65,15 @@ decidir() {
     return 0
   fi
 
-  NOVAS=$(git diff --name-only --diff-filter=AM "$ULTIMO" HEAD -- "$PASTA" | grep 'migration.sql$' || true)
+  # Migrações aplicadas não podem mudar: alteração, remoção ou renomeação é erro.
+  ALTERADAS=$(git diff --name-status -M "$ULTIMO" HEAD -- "$PASTA" | awk '$1 ~ /^(M|D|R)/ && $0 ~ /migration\.sql/')
+  if [ -n "$ALTERADAS" ]; then
+    echo "::error::Migração já aplicada foi alterada, removida ou renomeada desde $ULTIMO; deploy interrompido:"
+    echo "$ALTERADAS" | sed 's/^/  /'
+    exit 1
+  fi
+
+  NOVAS=$(git diff --name-only --diff-filter=A "$ULTIMO" HEAD -- "$PASTA" | grep 'migration.sql$' || true)
   if [ -z "$NOVAS" ]; then
     echo "Nenhuma migração nova desde $ULTIMO."
     return 1

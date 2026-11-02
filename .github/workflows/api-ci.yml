@@ -10,6 +10,7 @@ on:
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
       - 'hpg_core/**'
+      - 'deploy/aws/**'
       - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [ main ]
@@ -20,6 +21,7 @@ on:
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
       - 'hpg_core/**'
+      - 'deploy/aws/**'
       - '.github/workflows/api-ci.yml'
 
 permissions:
@@ -73,6 +75,10 @@ jobs:
           python3 server/tests/fixtures/gerar_fixtures_h16.py
           git diff --exit-code server/tests/fixtures/h16-python.json \
             || { echo "::error::O núcleo Python mudou: regenere server/tests/fixtures/h16-python.json e revise o porte TypeScript."; exit 1; }
+
+      - name: Testes do script de snapshot por risco (aws simulado)
+        working-directory: .
+        run: bash deploy/aws/testes/testar-snapshot.sh
 
       - name: Typecheck, testes unitários e build
         run: |
@@ -179,7 +185,14 @@ jobs:
       # as de severidade alta aparecem no relatório sem bloquear o merge.
       - name: Varredura de vulnerabilidades das imagens (Trivy)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          # Versão fixada e SHA-256 conferido contra o valor gravado aqui (não contra
+          # o arquivo de checksums do próprio release). Para atualizar, troque os dois.
+          TRIVY_VERSAO=0.75.0
+          TRIVY_SHA256=c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f
+          curl -sfL -o /tmp/trivy.tgz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSAO}/trivy_${TRIVY_VERSAO}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  /tmp/trivy.tgz" | sha256sum -c -
+          sudo tar -xzf /tmp/trivy.tgz -C /usr/local/bin trivy
           trivy --version
           for img in nautam-api:ci nautam-migrate:ci nautam-dashboard:ci; do
             echo "::group::$img (CRITICAL e HIGH, relatório)"
