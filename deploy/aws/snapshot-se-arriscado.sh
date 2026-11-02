@@ -11,6 +11,9 @@
 #   timeout ou falha de rede ao ler o SSM interrompem o deploy.
 # - Migração já aplicada que foi alterada, removida ou renomeada
 #   interrompe o deploy: o Prisma registra checksum das aplicadas.
+#   Essa verificação vale em todos os modos, inclusive 'sempre' e 'nunca'.
+# - Commit do último deploy ausente do histórico também interrompe,
+#   porque sem ele a imutabilidade não pode ser verificada.
 #
 # Modos (variável MODO): auto (padrão) | sempre | nunca
 #
@@ -47,30 +50,37 @@ ler_ultimo_deploy() {
   exit 1
 }
 
-decidir() {
-  case "$MODO" in
-    sempre) echo "Modo 'sempre'."; return 0 ;;
-    nunca)  echo "Modo 'nunca'."; return 1 ;;
-    auto)   ;;
-    *) echo "::error::MODO inválido: $MODO"; exit 2 ;;
-  esac
+# Validações que valem para TODOS os modos (auto, sempre, nunca): nenhum modo
+# manual pode contornar a imutabilidade das migrações já aplicadas.
+case "$MODO" in
+  auto|sempre|nunca) ;;
+  *) echo "::error::MODO inválido: $MODO"; exit 2 ;;
+esac
 
-  ULTIMO=$(ler_ultimo_deploy) || exit 1
-  if [ -z "$ULTIMO" ]; then
-    echo "Parâmetro de último deploy inexistente (primeiro deploy): banco ainda vazio, snapshot dispensado."
-    return 1
-  fi
+ULTIMO=$(ler_ultimo_deploy) || exit 1
+if [ -n "$ULTIMO" ]; then
   if ! git cat-file -e "${ULTIMO}^{commit}" 2>/dev/null; then
-    echo "::warning::Commit do último deploy ($ULTIMO) não está no histórico local; por segurança, tira snapshot."
-    return 0
+    echo "::error::Commit do último deploy ($ULTIMO) não está no histórico local; sem ele não dá para verificar a imutabilidade das migrações. Deploy interrompido."
+    exit 1
   fi
-
   # Migrações aplicadas não podem mudar: alteração, remoção ou renomeação é erro.
   ALTERADAS=$(git diff --name-status -M "$ULTIMO" HEAD -- "$PASTA" | awk '$1 ~ /^(M|D|R)/ && $0 ~ /migration\.sql/')
   if [ -n "$ALTERADAS" ]; then
     echo "::error::Migração já aplicada foi alterada, removida ou renomeada desde $ULTIMO; deploy interrompido:"
     echo "$ALTERADAS" | sed 's/^/  /'
     exit 1
+  fi
+fi
+
+decidir() {
+  case "$MODO" in
+    sempre) echo "Modo 'sempre'."; return 0 ;;
+    nunca)  echo "Modo 'nunca'."; return 1 ;;
+  esac
+
+  if [ -z "$ULTIMO" ]; then
+    echo "Parâmetro de último deploy inexistente (primeiro deploy): banco ainda vazio, snapshot dispensado."
+    return 1
   fi
 
   NOVAS=$(git diff --name-only --diff-filter=A "$ULTIMO" HEAD -- "$PASTA" | grep 'migration.sql$' || true)

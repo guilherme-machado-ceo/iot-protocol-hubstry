@@ -24,9 +24,9 @@ printf 'CREATE TABLE "A" (id int, b int REFERENCES "B"(id) ON UPDATE CASCADE);\n
 git add -A && git commit -qm init && git rev-parse HEAD > "$T/sha"
 
 FALHAS=0
-caso() { # caso <nome> <SSM> <rc esperado> <texto esperado>
+caso() { # caso <nome> <SSM> <rc esperado> <texto esperado>   (MODO via variável, padrão auto)
   local out rc
-  out=$(PATH="$T/bin:$PATH" SHA_FILE="$T/sha" SSM="$2" DB_INSTANCE_ID=db AWS_REGION=sa-east-1 \
+  out=$(PATH="$T/bin:$PATH" SHA_FILE="$T/sha" SSM="$2" MODO="${MODO:-auto}" DB_INSTANCE_ID=db AWS_REGION=sa-east-1 \
         PARAM_ULTIMO_DEPLOY=/nautam/production/ultimo-deploy bash "$SCRIPT" 2>&1); rc=$?
   if [ "$rc" = "$3" ] && grep -q -- "$4" <<<"$out"; then echo "ok   $1"
   else echo "FALHA $1 (rc=$rc, esperado $3; procurado '$4')"; echo "$out" | sed 's/^/     /'; FALHAS=$((FALHAS+1)); fi
@@ -44,12 +44,27 @@ caso "UPDATE sem aspas tira snapshot"       ok       0 "snapshot=db-pre-migracao
 git reset -q --hard HEAD~1
 novo 003_nn 'ALTER TABLE "A" ALTER COLUMN "c" SET NOT NULL;'
 caso "SET NOT NULL tira snapshot"           ok       0 "snapshot=db-pre-migracao"
+git reset -q --hard HEAD~1
+novo 003_di 'DROP INDEX "A_c_idx";'
+caso "DROP INDEX tira snapshot"             ok       0 "snapshot=db-pre-migracao"
+git reset -q --hard HEAD~1
+novo 003_dc 'ALTER TABLE "A" DROP CONSTRAINT "A_b_fkey";'
+caso "DROP CONSTRAINT tira snapshot"        ok       0 "snapshot=db-pre-migracao"
 git reset -q --hard HEAD~2
 echo '-- editada' >> $M/001_init/migration.sql; git commit -qam edit
 caso "migração aplicada alterada"           ok       1 "deploy interrompido"
+MODO=sempre caso "alterada, modo sempre não contorna" ok 1 "deploy interrompido"
+MODO=nunca  caso "alterada, modo nunca não contorna"  ok 1 "deploy interrompido"
 git reset -q --hard HEAD~1; git mv $M/001_init $M/001_x; git commit -qm mv
 caso "migração aplicada renomeada"          ok       1 "deploy interrompido"
 git reset -q --hard HEAD~1; git rm -rq $M/001_init; git commit -qm rm
 caso "migração aplicada removida"           ok       1 "deploy interrompido"
+MODO=nunca  caso "removida, modo nunca não contorna"   ok 1 "deploy interrompido"
+git reset -q --hard HEAD~1
+MODO=sempre caso "modo sempre sem alteração tira snapshot" ok 0 "snapshot=db-pre-migracao"
+MODO=nunca  caso "modo nunca sem alteração dispensa"       ok 0 "snapshot=nenhum"
+MODO=xyz    caso "modo inválido"                           ok 2 "MODO inválido"
+echo deadbeefdeadbeefdeadbeefdeadbeefdeadbeef > "$T/sha"
+caso "último deploy fora do histórico interrompe"         ok 1 "não está no histórico"
 
 [ "$FALHAS" -eq 0 ] && echo "Todos os casos passaram." || { echo "$FALHAS caso(s) falharam."; exit 1; }
