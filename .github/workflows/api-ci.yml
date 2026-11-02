@@ -114,13 +114,16 @@ jobs:
           # Chave malformada: 401
           test "$(code -X POST $URL -H 'x-api-key: nk_invalida' -H 'content-type: application/json' -d "$REG")" = 401
 
+          # O job roda com NODE_ENV=production; as chaves de teste usam NODE_ENV=test,
+          # único modo em que o CLI aceita imprimir a chave (--stdout).
+
           # Chave só de leitura: 403 na escrita, 200 na leitura
-          RO=$(npm run -s apikey -- create --name ci-leitura --scopes devices:read | jq -r .key)
+          RO=$(NODE_ENV=test npm run -s apikey -- create --name ci-leitura --scopes devices:read --stdout | jq -r .key)
           test "$(code -X POST $URL -H "x-api-key: $RO" -H 'content-type: application/json' -d "$REG")" = 403
           test "$(code localhost:3001/api/devices -H "x-api-key: $RO")" = 200
 
           # Chave de escrita: 201, também via Authorization: Bearer
-          RW=$(npm run -s apikey -- create --name ci-escrita --scopes devices:write | jq -r .key)
+          RW=$(NODE_ENV=test npm run -s apikey -- create --name ci-escrita --scopes devices:write --stdout | jq -r .key)
           test "$(code -X POST $URL -H "x-api-key: $RW" -H 'content-type: application/json' -d "$REG")" = 201
           test "$(code -X POST $URL -H "Authorization: Bearer $RW" -H 'content-type: application/json' -d "$REG")" = 201
 
@@ -129,10 +132,24 @@ jobs:
           test "$(code -X POST $URL -H "x-api-key: $RW" -H 'content-type: application/json' -d "$REG")" = 401
 
           # Contrato H16 com chave de cálculo
-          RC=$(npm run -s apikey -- create --name ci-calculo --scopes harmonic:compute | jq -r .key)
+          RC=$(NODE_ENV=test npm run -s apikey -- create --name ci-calculo --scopes harmonic:compute --stdout | jq -r .key)
           test "$(curl -sf localhost:3001/api/harmonic/hn -H "x-api-key: $RC" | jq .cardinality)" = 159
           curl -sf -X POST localhost:3001/api/harmonic/fft -H "x-api-key: $RC" -H 'content-type: application/json' -d '{}' \
             | jq -e '[.peaks[].closest_ratio] | sort == ["1/1","2/1","3/1","3/2","4/3","5/4"]'
+
+          # /simulate exige harmonic:write; a chave de cálculo leva 403
+          SIMB='{"harmonics":[{"a":3,"b":2}]}'
+          SIMU=localhost:3001/api/harmonic/simulate
+          test "$(code -X POST $SIMU -H "x-api-key: $RC" -H 'content-type: application/json' -d "$SIMB")" = 403
+          RH=$(NODE_ENV=test npm run -s apikey -- create --name ci-simulacao --scopes harmonic:write --stdout | jq -r .key)
+          curl -sf -X POST $SIMU -H "x-api-key: $RH" -H 'content-type: application/json' -d "$SIMB" \
+            | jq -e '.components[0].ratio == "3/2"'
+          test "$(code localhost:3001/api/harmonic/hn -H "x-api-key: $RH")" = 403
+
+          # Em produção, o CLI recusa imprimir a chave (ela acabaria no CloudWatch Logs)
+          if NODE_ENV=production npm run -s apikey -- create --name ci-prod --scopes devices:read --stdout; then
+            echo "::error::CLI imprimiu chave com NODE_ENV=production"; exit 1
+          fi
 
           npm run -s apikey -- list
           echo "Autenticação verificada."

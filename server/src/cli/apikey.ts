@@ -1,35 +1,57 @@
 // Gestão de chaves de API do Nautam pela linha de comando.
 //
-//   node dist/cli/apikey.js create --name "parceiro-x" --scopes devices:read,devices:write [--expires-days 90]
+// Produção (tarefa avulsa do ECS; a chave vai para o Secrets Manager e só o ARN é impresso):
+//   node dist/cli/apikey.js create --name parceiro-x --scopes devices:read,devices:write \
+//     --secret-name /nautam/production/apikeys/parceiro-x [--expires-days 90]
+//
+// Desenvolvimento local e CI (recusado com NODE_ENV=production):
+//   node dist/cli/apikey.js create --name dev --scopes devices:read --stdout
+//
 //   node dist/cli/apikey.js list
 //   node dist/cli/apikey.js revoke --prefix AbC12345
 //
-// Em produção, roda como tarefa avulsa do ECS com a mesma imagem da API,
-// porque o banco é privado. A chave em claro só é exibida na criação.
+// Para ler a chave entregue em produção, quem tem acesso ao segredo roda:
+//   aws secretsmanager get-secret-value --secret-id <ARN> --query SecretString --output text
 
 import { prisma, disconnectPrisma } from '../db'
-import { generateKey, SCOPES, type Scope } from '../keys'
+import { criarChave, type Entrega } from './apikey-admin'
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`)
   return i >= 0 ? process.argv[i + 1] : undefined
 }
 
-async function create() {
-  const name = arg('name')
-  const scopesArg = arg('scopes')
-  if (!name || !scopesArg) throw new Error('Uso: create --name <nome> --scopes <escopo,escopo> [--expires-days N]')
-  const scopes = scopesArg.split(',').map((s) => s.trim()).filter(Boolean)
-  const invalid = scopes.filter((s) => !(SCOPES as readonly string[]).includes(s))
-  if (invalid.length) throw new Error(`Escopos inválidos: ${invalid.join(', ')}. Válidos: ${SCOPES.join(', ')}`)
-  const days = arg('expires-days')
-  const expiresAt = days ? new Date(Date.now() + Number(days) * 86_400_000) : null
-  if (days && (!Number.isFinite(Number(days)) || Number(days) <= 0)) throw new Error('--expires-days deve ser positivo')
+async function gravarSegredo(nome: string, valor: string, tags: Record<string, string>): Promise<string> {
+  const { SecretsManagerClient, CreateSecretCommand } = await import('@aws-sdk/client-secrets-manager')
+  const client = new SecretsManagerClient({})
+  const r = await client.send(new CreateSecretCommand({
+    Name: nome,
+    SecretString: valor,
+    Description: 'Chave de API do Nautam (gerada pelo CLI apikey)',
+    Tags: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
+  }))
+  if (!r.ARN) throw new Error('Secrets Manager não devolveu o ARN')
+  return r.ARN
+}
 
-  const { key, prefix, keyHash } = generateKey()
-  await prisma.apiKey.create({ data: { name, prefix, keyHash, scopes: scopes as Scope[], expiresAt } })
-  console.log(JSON.stringify({ name, prefix, scopes, expiresAt, key }, null, 2))
-  console.error('Guarde a chave agora: ela não será exibida de novo.')
+async function create() {
+  const secretName = arg('secret-name')
+  const stdout = process.argv.includes('--stdout')
+  if (Boolean(secretName) === stdout) throw new Error('Informe exatamente um destino: --secret-name <nome> ou --stdout')
+  const entrega: Entrega = secretName ? { tipo: 'secrets-manager', nomeSegredo: secretName } : { tipo: 'stdout' }
+  const days = arg('expires-days')
+
+  const r = await criarChave({
+    name: arg('name') ?? '',
+    scopes: (arg('scopes') ?? '').split(','),
+    expiresDays: days === undefined ? undefined : Number(days),
+    entrega,
+    producao: process.env.NODE_ENV === 'production',
+  }, { apiKey: prisma.apiKey, gravarSegredo })
+
+  console.log(JSON.stringify(r, null, 2))
+  if (r.key) console.error('Guarde a chave agora: ela não será exibida de novo.')
+  else console.error(`Chave entregue no segredo ${r.secretArn}. Nada sensível foi impresso.`)
 }
 
 async function list() {
