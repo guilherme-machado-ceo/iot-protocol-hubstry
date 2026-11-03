@@ -57,3 +57,50 @@ model ApiKey {
   expiresAt  DateTime?
   revokedAt  DateTime?
 }
+
+// Nautam Live: leituras públicas reais e execuções do protocolo sobre elas.
+// Sem coordenadas, nomes de contribuidores ou contatos (minimização, LGPD).
+model LiveRun {
+  id               Int       @id @default(autoincrement())
+  slotUtc          DateTime  @unique // início do intervalo UTC; impede execução duplicada
+  status           String    // running | succeeded | no_new_data | failed
+  sources          String[]
+  newObservations  Int       @default(0)
+  sourceObservedAt DateTime?
+  expectedChannels Json?     // preenchido na E2
+  decodedPeaks     Json?
+  metrics          Json?
+  mqttBaseline     Json?
+  noiseSeed        String?
+  requestedSnrDb   Float?
+  measuredSnrDb    Float?
+  errorCode        String?
+  errorDetail      String?
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+
+  @@index([status, slotUtc])
+  @@index([completedAt])
+}
+
+model LiveObservation {
+  id          Int      @id @default(autoincrement())
+  provider    String   // openaq | ons
+  stationRef  String
+  sensorRef   String   // identificador estável da série na fonte
+  parameter   String
+  value       Float
+  unit        String
+  observedAt  DateTime // instante da medição na fonte (UTC)
+  ingestedAt  DateTime @default(now())
+  firstRunId  Int?
+  locality    String?
+  licenseName String
+  licenseUrl  String
+  attribution String
+  sourceUrl   String
+
+  @@unique([provider, sensorRef, observedAt])
+  @@index([parameter, observedAt])
+  @@index([observedAt])
+}

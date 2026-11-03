@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:db-performance": "vitest run tests/performance/",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "live": "node dist/cli/live.js"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1161.0",
