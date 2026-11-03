@@ -175,6 +175,17 @@ jobs:
       - name: Build da imagem de migração
         run: docker build -f server/Dockerfile --target migrate -t nautam-migrate:ci server/
 
+      # A imagem de migração precisa funcionar sozinha: aplica as migrações
+      # num PostgreSQL limpo, na mesma rede Docker, como fará no ECS.
+      - name: Smoke test da imagem de migração
+        run: |
+          docker network create migra
+          docker run -d --name pg --network migra -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=nautam postgres:16-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U ci -d nautam && break; sleep 1; done
+          docker run --rm --network migra -e DATABASE_URL=postgresql://ci:ci@pg:5432/nautam nautam-migrate:ci
+          docker exec pg psql -U ci -d nautam -tAc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL' | grep -qx 2 \
+            || { echo "::error::a imagem de migração não aplicou as 2 migrações"; exit 1; }
+
       - name: Build da imagem do dashboard
         run: docker build -f Dockerfile.dashboard -t nautam-dashboard:ci .
 
