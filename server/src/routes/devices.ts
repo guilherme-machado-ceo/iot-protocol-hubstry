@@ -7,9 +7,9 @@ const RegisterBody = z.object({
   deviceId: z.string().min(1).max(128),
   deviceType: z.string().default('generic'),
   fundamentalFreq: z.number().positive().default(1000),
-  sensors: z.array(z.string()).default([]),
-  harmonicChannels: z.record(z.string()).default({}),
-  capabilities: z.array(z.string()).default([]),
+  sensors: z.array(z.string().max(120)).max(64).default([]),
+  harmonicChannels: z.record(z.string(), z.string()).default({}),
+  capabilities: z.array(z.string().max(120)).max(64).default([]),
 })
 
 export async function deviceRoutes(app: FastifyInstance) {
