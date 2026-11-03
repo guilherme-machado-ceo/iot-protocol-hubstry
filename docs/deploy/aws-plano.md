@@ -189,7 +189,7 @@ O HSL e a rotação de chaves por LFSR (Linear Feedback Shift Register) do proto
 | `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::<ACCOUNT_ID>:role/nautam-github-deploy` |
 | `ECR_API_REPO` | `nautam/api` |
 | `ECR_DASHBOARD_REPO` | `nautam/dashboard` |
-| `ECS_CLUSTER` | `nautam` |
+| `ECS_CLUSTER` | `default` |
 | `ECS_API_SERVICE` | `nautam-api` |
 | `ECS_DASHBOARD_SERVICE` | `nautam-dashboard` |
 | `ECS_EXECUTION_ROLE_ARN` | papel de execução das tarefas |

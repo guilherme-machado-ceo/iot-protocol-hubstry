@@ -32,6 +32,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment: production
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
       id-token: write
@@ -138,9 +139,10 @@ jobs:
         run: |
           test -n "$BASE_URL" || { echo "::error::URL da API desconhecida"; exit 1; }
           case "$BASE_URL" in http*) ;; *) BASE_URL="https://$BASE_URL" ;; esac
+          echo "Verificando $BASE_URL/api/readyz"
           for i in $(seq 1 30); do
-            curl -sf "$BASE_URL/api/readyz" && exit 0
-            sleep 10
+            curl -sf --max-time 10 "$BASE_URL/api/readyz" && exit 0
+            echo "tentativa $i/30 sem resposta; aguardando 10s"; sleep 10
           done
           echo "::error::API não ficou pronta em $BASE_URL"; exit 1
 
