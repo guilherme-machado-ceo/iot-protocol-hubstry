@@ -71,6 +71,20 @@ SIN;SISTEMA INTERLIGADO NACIONAL;2026-10-31 23:00:00;51080.512;11371.368;11567.5
 `
 
 describe('ONS', () => {
+  it('segue o 301 do S3 para a região indicada em x-amz-bucket-region', async () => {
+    const chamadas: string[] = []
+    const f = (async (url: string | URL) => {
+      const u = String(url); chamadas.push(u)
+      if (u.includes('.s3.amazonaws.com/')) return new Response('<Error>PermanentRedirect</Error>', { status: 301, headers: { 'x-amz-bucket-region': 'us-west-2' } })
+      if (u.includes('.s3.us-west-2.amazonaws.com/') && u.endsWith('_2026.csv')) return new Response(CAUDA, { status: 206 })
+      return new Response('nf', { status: 404 })
+    }) as unknown as Fetch
+    const r = await coletarONS(f, AGORA)
+    expect(r.rejeitadas).toEqual([])
+    expect(r.observacoes).toHaveLength(4)
+    expect(chamadas[1]).toContain('ons-aws-prod-opendata.s3.us-west-2.amazonaws.com/dataset/balanco_energia_subsistema_ho/')
+  })
+
   it('horário de Brasília vira UTC (+3 h)', () => {
     expect(instanteOnsParaUtc('2026-10-31 23:00:00').toISOString()).toBe('2026-11-01T02:00:00.000Z')
   })

@@ -1,7 +1,7 @@
 // Adaptador ONS: balanço de energia horário por subsistema (CC BY 4.0), lido do
 // bucket público do Open Data on AWS sem assinatura. Para não baixar o arquivo
 // inteiro (~4 MB), lê só os últimos bytes por HTTP Range.
-import { ONS_BASE, SERIES_ONS, TIMEOUT_MS } from './config'
+import { ONS_BASE, ONS_BUCKET, ONS_PREFIXO, SERIES_ONS, TIMEOUT_MS } from './config'
 import type { Fetch, Observacao, ResultadoFonte } from './tipos'
 
 const LICENCA = { licenseName: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/' }
@@ -39,12 +39,20 @@ export function interpretarCauda(texto: string, ano: number, series = SERIES_ONS
 export async function coletarONS(f: Fetch = fetch, agora = new Date()): Promise<ResultadoFonte> {
   const out: ResultadoFonte = { fonte: 'ons', observacoes: [], rejeitadas: [] }
   // Na virada do ano o arquivo novo pode ainda não existir: tenta o ano anterior.
+  const pedir = (url: string) => f(url, {
+    headers: { Range: `bytes=-${BYTES_FINAIS}`, 'User-Agent': 'nautam-live/1.0 (Hubstry)' },
+    signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'manual',
+  })
   for (const ano of [agora.getUTCFullYear(), agora.getUTCFullYear() - 1]) {
     try {
-      const r = await f(`${ONS_BASE}/BALANCO_ENERGIA_SUBSISTEMA_${ano}.csv`, {
-        headers: { Range: `bytes=-${BYTES_FINAIS}`, 'User-Agent': 'nautam-live/1.0 (Hubstry)' },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      })
+      const arquivo = `BALANCO_ENERGIA_SUBSISTEMA_${ano}.csv`
+      let r = await pedir(`${ONS_BASE}/${arquivo}`)
+      // O S3 responde 301 (PermanentRedirect) sem Location quando o endpoint não é
+      // o da região do bucket; a região certa vem no cabeçalho x-amz-bucket-region.
+      const regiao = r.headers.get('x-amz-bucket-region')
+      if ((r.status === 301 || r.status === 307) && regiao) {
+        r = await pedir(`https://${ONS_BUCKET}.s3.${regiao}.amazonaws.com/${ONS_PREFIXO}/${arquivo}`)
+      }
       if (r.status === 404 || r.status === 403) continue
       if (!r.ok) throw new Error(`ONS ${ano}: HTTP ${r.status}`)
       out.observacoes = interpretarCauda(await r.text(), ano)
