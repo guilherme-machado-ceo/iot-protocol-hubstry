@@ -183,8 +183,10 @@ jobs:
           docker run -d --name pg --network migra -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=nautam postgres:16-alpine
           for i in $(seq 1 30); do docker exec pg pg_isready -U ci -d nautam && break; sleep 1; done
           docker run --rm --network migra -e DATABASE_URL=postgresql://ci:ci@pg:5432/nautam nautam-migrate:ci
-          docker exec pg psql -U ci -d nautam -tAc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL' | grep -qx 2 \
-            || { echo "::error::a imagem de migração não aplicou as 2 migrações"; exit 1; }
+          ESPERADAS=$(ls -d server/prisma/migrations/*/ | wc -l)
+          APLICADAS=$(docker exec pg psql -U ci -d nautam -tAc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL')
+          test "$APLICADAS" = "$ESPERADAS" \
+            || { echo "::error::a imagem de migração aplicou $APLICADAS de $ESPERADAS migrações"; exit 1; }
 
       - name: Build da imagem do dashboard
         run: docker build -f Dockerfile.dashboard -t nautam-dashboard:ci .
