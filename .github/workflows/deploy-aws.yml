@@ -36,21 +36,24 @@ jobs:
       contents: read
       id-token: write
     env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_API_REPO: ${{ vars.ECR_API_REPO }}               # ex.: nautam/api
-      ECR_DASHBOARD_REPO: ${{ vars.ECR_DASHBOARD_REPO }}   # ex.: nautam/dashboard
-      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       IMAGE_TAG: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # histórico completo para comparar migrações com o último deploy
 
+      # Configuração de produção versionada no repositório (só identificadores,
+      # nenhum segredo). Cada linha CHAVE=valor vira variável de ambiente do job.
+      - name: Carregar configuração de produção
+        run: |
+          grep -E '^[A-Z_]+=' deploy/aws/producao.env >> "$GITHUB_ENV"
+          grep -E '^[A-Z_]+=' deploy/aws/producao.env | cut -d= -f1 | tr '\n' ' '; echo
+
       - name: Credenciais AWS via OIDC (sem chave estática)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login no ECR
         id: ecr
@@ -73,7 +76,7 @@ jobs:
         id: snapshot
         env:
           MODO: ${{ inputs.snapshot }}
-          DB_INSTANCE_ID: ${{ vars.DB_INSTANCE_ID }}
+          DB_INSTANCE_ID: ${{ env.DB_INSTANCE_ID }}
           PARAM_ULTIMO_DEPLOY: /nautam/production/ultimo-deploy
         run: deploy/aws/snapshot-se-arriscado.sh
 
@@ -81,9 +84,9 @@ jobs:
         id: migrate_td
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
-          EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
-          TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
-          DATABASE_URL_SECRET_ARN: ${{ vars.DATABASE_URL_SECRET_ARN }}
+          EXECUTION_ROLE_ARN: ${{ env.ECS_EXECUTION_ROLE_ARN }}
+          TASK_ROLE_ARN: ${{ env.ECS_TASK_ROLE_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ env.DATABASE_URL_SECRET_ARN }}
         run: |
           export MIGRATE_IMAGE="$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
           envsubst < deploy/aws/migrate-taskdef.json > /tmp/migrate-taskdef.json
@@ -99,39 +102,39 @@ jobs:
       - name: Migração Prisma (tarefa ECS avulsa)
         env:
           TASK_DEFINITION_ARN: ${{ steps.migrate_td.outputs.arn }}
-          SUBNETS: ${{ vars.ECS_SUBNETS }}                  # ex.: subnet-a,subnet-b
-          SECURITY_GROUPS: ${{ vars.ECS_MIGRATE_SECURITY_GROUPS }}
+          SUBNETS: ${{ env.ECS_SUBNETS }}                  # ex.: subnet-a,subnet-b
+          SECURITY_GROUPS: ${{ env.ECS_MIGRATE_SECURITY_GROUPS }}
         run: deploy/aws/run-migration.sh
 
       - name: Atualizar serviço da API (ECS Express Mode)
         id: api_deploy
         uses: aws-actions/amazon-ecs-deploy-express-service@v1
         with:
-          service-name: ${{ vars.ECS_API_SERVICE }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          image: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_API_REPO }}:api-${{ github.sha }}
-          execution-role-arn: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
-          infrastructure-role-arn: ${{ vars.ECS_INFRASTRUCTURE_ROLE_ARN }}
-          task-role-arn: ${{ vars.ECS_TASK_ROLE_ARN }}
+          service-name: ${{ env.ECS_API_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_API_REPO }}:api-${{ github.sha }}
+          execution-role-arn: ${{ env.ECS_EXECUTION_ROLE_ARN }}
+          infrastructure-role-arn: ${{ env.ECS_INFRASTRUCTURE_ROLE_ARN }}
+          task-role-arn: ${{ env.ECS_TASK_ROLE_ARN }}
           container-port: 3001
           health-check-path: /api/readyz
           cpu: 256
           memory: 512
           min-task-count: 1
           max-task-count: 2
-          subnets: ${{ vars.ECS_SUBNETS }}
-          security-groups: ${{ vars.ECS_API_SECURITY_GROUPS }}
+          subnets: ${{ env.ECS_SUBNETS }}
+          security-groups: ${{ env.ECS_API_SECURITY_GROUPS }}
           # A action espera arrays JSON: name/value e name/valueFrom.
           environment-variables: >-
             [{"name":"NODE_ENV","value":"production"},
-             {"name":"CORS_ORIGIN","value":"${{ vars.CORS_ORIGIN }}"}]
+             {"name":"CORS_ORIGIN","value":"${{ env.CORS_ORIGIN }}"}]
           secrets: >-
-            [{"name":"DATABASE_URL","valueFrom":"${{ vars.DATABASE_URL_SECRET_ARN }}"}]
+            [{"name":"DATABASE_URL","valueFrom":"${{ env.DATABASE_URL_SECRET_ARN }}"}]
 
       - name: Teste pós-deploy (readiness)
         env:
           # Usa a URL pública configurada; na falta dela, o endpoint do ALB.
-          BASE_URL: ${{ vars.API_BASE_URL || steps.api_deploy.outputs.endpoint }}
+          BASE_URL: ${{ env.API_BASE_URL || steps.api_deploy.outputs.endpoint }}
         run: |
           test -n "$BASE_URL" || { echo "::error::URL da API desconhecida"; exit 1; }
           case "$BASE_URL" in http*) ;; *) BASE_URL="https://$BASE_URL" ;; esac
@@ -160,16 +163,16 @@ jobs:
         if: inputs.deploy_dashboard
         uses: aws-actions/amazon-ecs-deploy-express-service@v1
         with:
-          service-name: ${{ vars.ECS_DASHBOARD_SERVICE }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          image: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_DASHBOARD_REPO }}:${{ github.sha }}
-          execution-role-arn: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
-          infrastructure-role-arn: ${{ vars.ECS_INFRASTRUCTURE_ROLE_ARN }}
+          service-name: ${{ env.ECS_DASHBOARD_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_DASHBOARD_REPO }}:${{ github.sha }}
+          execution-role-arn: ${{ env.ECS_EXECUTION_ROLE_ARN }}
+          infrastructure-role-arn: ${{ env.ECS_INFRASTRUCTURE_ROLE_ARN }}
           container-port: 8501
           health-check-path: /_stcore/health
           cpu: 512
           memory: 1024
           min-task-count: 1
           max-task-count: 1
-          subnets: ${{ vars.ECS_SUBNETS }}
-          security-groups: ${{ vars.ECS_DASHBOARD_SECURITY_GROUPS }}
+          subnets: ${{ env.ECS_SUBNETS }}
+          security-groups: ${{ env.ECS_DASHBOARD_SECURITY_GROUPS }}
