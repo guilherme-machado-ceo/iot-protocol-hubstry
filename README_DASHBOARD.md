@@ -1,12 +1,12 @@
 # Nautam IoT Protocol — Streamlit POC Dashboard
 
-Este diretório contém os módulos Python do protocolo Nautam (HALE + HPG Framework)
-e um dashboard interativo Streamlit para visualização e execução do pipeline real.
+Os módulos Python do protocolo Nautam (HALE + HPG Framework) e o dashboard
+interativo Streamlit ficam na raiz do repositório.
 
 ## Estrutura
 
 ```
-nautam-streamlit-poc/
+iot-protocol-hubstry/          # raiz do repositório (trecho relevante)
 ├── hale_core/              # HALE — Harmonic Addressing & Labeling Equation
 │   ├── __init__.py
 │   ├── hale_equation.py    # Pipeline: f0 → H → h → ψ → c → M → g
@@ -23,7 +23,8 @@ nautam-streamlit-poc/
 │   ├── intrusion_detection.py # Detecção por desvio de fase Δφ > ε
 │   └── key_rotation.py     # LFSR Key Rotation
 ├── dashboard.py            # Streamlit dashboard interativo
-└── requirements.txt        # Dependências Python
+├── requirements.txt        # Dependências Python
+└── Dockerfile.dashboard    # Imagem do dashboard (porta 8501)
 ```
 
 ## Como Executar
@@ -33,13 +34,27 @@ nautam-streamlit-poc/
 cd iot-protocol-hubstry
 
 # Instalar dependências
-pip install -r nautam-streamlit-poc/requirements.txt
+pip install -r requirements.txt
 
 # Rodar o dashboard
-streamlit run nautam-streamlit-poc/dashboard.py
+streamlit run dashboard.py
 ```
 
 Abre em **http://localhost:8501**
+
+### Com Docker
+
+```bash
+docker build -f Dockerfile.dashboard -t nautam-dashboard .
+docker run --rm -p 8501:8501 nautam-dashboard
+```
+
+Health check: `GET http://localhost:8501/_stcore/health`
+
+### Publicação
+
+- Streamlit Community Cloud: https://nautam-iot-protocol.streamlit.app/ (branch `main`, arquivo `dashboard.py`)
+- AWS (ECS): planejado em `docs/deploy/aws-plano.md`, sujeito a aprovação de custo
 
 ## Seções do Dashboard
 

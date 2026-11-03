@@ -1,8 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../db'
+import { requireScope } from '../auth'
 
 const RegisterBody = z.object({
   deviceId: z.string().min(1).max(128),
@@ -15,6 +14,7 @@ const RegisterBody = z.object({
 
 export async function deviceRoutes(app: FastifyInstance) {
   app.post('/register', {
+    preHandler: requireScope('devices:write'),
     schema: {
       tags: ['devices'],
       summary: 'Register a new IoT device',
@@ -63,6 +63,7 @@ export async function deviceRoutes(app: FastifyInstance) {
   })
 
   app.get('/', {
+    preHandler: requireScope('devices:read'),
     schema: {
       tags: ['devices'],
       summary: 'List all registered devices',
@@ -76,6 +77,7 @@ export async function deviceRoutes(app: FastifyInstance) {
   })
 
   app.get('/:deviceId', {
+    preHandler: requireScope('devices:read'),
     schema: {
       tags: ['devices'],
       summary: 'Get device by ID',

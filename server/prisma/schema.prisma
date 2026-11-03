@@ -44,3 +44,16 @@ model HarmonicProtocolLog {
 
   @@index([createdAt])
 }
+
+// Chaves de API: só o prefixo e o hash SHA-256 ficam no banco.
+model ApiKey {
+  id         Int       @id @default(autoincrement())
+  name       String
+  prefix     String    @unique
+  keyHash    String    @unique
+  scopes     String[]
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+}

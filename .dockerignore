@@ -1,0 +1,22 @@
+# Contexto da raiz, usado pelo Dockerfile.dashboard
+.git
+.github
+.devcontainer
+.kiro
+**/__pycache__
+**/*.pyc
+**/node_modules
+demo-web
+server
+src
+sdk
+docs
+tests
+monitoring
+nginx
+compliance
+cybersecurity
+scripts
+iot-protocol-hubstry
+.env
+.env.*

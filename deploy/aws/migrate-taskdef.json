@@ -1,0 +1,29 @@
+{
+  "family": "nautam-migrate",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "runtimePlatform": { "operatingSystemFamily": "LINUX", "cpuArchitecture": "X86_64" },
+  "containerDefinitions": [
+    {
+      "name": "migrate",
+      "image": "${MIGRATE_IMAGE}",
+      "essential": true,
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "${DATABASE_URL_SECRET_ARN}" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/nautam-migrate",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "migrate",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
