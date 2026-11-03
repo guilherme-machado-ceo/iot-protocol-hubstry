@@ -66,6 +66,8 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 COPY prisma/schema.prisma ./prisma/schema.prisma
+# Painel público do Nautam Live (HTML, JS, CSS e marcas), servido pelo Fastify em /live
+COPY public ./public
 COPY package.json ./
 # O npm embutido na imagem base não é usado em execução e traz alertas do Trivy.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx

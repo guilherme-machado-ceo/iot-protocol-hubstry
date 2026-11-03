@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nautam Live · Hubstry</title>
+<meta name="description" content="Dados públicos reais de qualidade do ar e de energia transmitidos pelo protocolo harmônico Nautam (HPM 1.0), com métricas abertas e proveniência declarada.">
+<link rel="icon" type="image/png" sizes="32x32" href="/live/assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/live/assets/favicon-180.png">
+<link rel="stylesheet" href="/live/app.css">
+<script src="/live/app.js" defer></script>
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="https://hubstry.dev" rel="noopener"><img src="/live/assets/hubstry-logo-claro.png" alt="Hubstry" width="200" height="25"></a>
+  <span class="produto">Nautam <b>Live</b></span>
+  <span id="estado" class="estado" data-estado="carregando">carregando…</span>
+</header>
+
+<main>
+  <section class="abertura">
+    <h1>Dados públicos reais, transmitidos por um protocolo harmônico, com as contas à mostra.</h1>
+    <p>A cada cinco minutos, o Nautam Live coleta leituras oficiais de qualidade do ar nos Estados Unidos e do balanço de energia do Brasil. Em seguida, codifica essas leituras em um único sinal composto pelo protocolo Nautam, aplica ruído controlado, decodifica o sinal e publica o que se recuperou, o que se perdeu e quanto custaria transmitir o mesmo conteúdo pelo MQTT (Message Queuing Telemetry Transport, transporte de telemetria por fila de mensagens), o protocolo de referência da IoT (Internet of Things, internet das coisas).</p>
+    <p class="declaracao" id="declaracao">simulação de sinal com dados reais; energia e interferência em campo não medidas</p>
+  </section>
+
+  <section aria-labelledby="t-indicadores">
+    <h2 id="t-indicadores">Última execução do protocolo</h2>
+    <div class="indicadores" id="indicadores"></div>
+    <p class="nota" id="nota-execucao"></p>
+  </section>
+
+  <section aria-labelledby="t-leituras">
+    <h2 id="t-leituras">Leituras transmitidas</h2>
+    <p class="nota">Cada linha é uma série pública. A coluna “recuperado” mostra o valor que saiu do outro lado do canal simulado. Clique em uma linha para ver o histórico.</p>
+    <div class="tabela-rolagem">
+      <table id="leituras">
+        <thead><tr><th>Série</th><th>Canal</th><th class="num">Original</th><th class="num">Recuperado</th><th>Medido em (UTC)</th><th>Fonte e licença</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-historico">
+    <h2 id="t-historico">Histórico da série</h2>
+    <div class="controles">
+      <label>Série <select id="sel-serie"></select></label>
+      <div class="janelas" role="group" aria-label="Janela de tempo">
+        <button type="button" data-janela="24h" aria-pressed="true">24 h</button>
+        <button type="button" data-janela="7d" aria-pressed="false">7 dias</button>
+        <button type="button" data-janela="30d" aria-pressed="false">30 dias</button>
+      </div>
+    </div>
+    <figure class="grafico"><div id="grafico"></div><figcaption id="legenda-grafico"></figcaption></figure>
+  </section>
+
+  <section aria-labelledby="t-robustez">
+    <h2 id="t-robustez">Robustez ao ruído</h2>
+    <p class="nota">Varredura diária de SNR (Signal-to-Noise Ratio, relação sinal-ruído), com 20 repetições por nível. Quanto menor a SNR, mais ruidoso o canal. O critério de aprovação é recuperar ao menos 95% dos canais (<i>recall</i>) com no mínimo 99% de acertos entre os canais apontados (precisão).</p>
+    <div class="tabela-rolagem"><table id="varredura"><thead><tr><th class="num">SNR (dB)</th><th class="num">Recall receptor HPM</th><th class="num">Precisão receptor HPM</th><th class="num">Falsos por quadro, decodificador cego</th></tr></thead><tbody></tbody></table></div>
+    <p class="nota" id="nota-varredura"></p>
+  </section>
+
+  <section aria-labelledby="t-mqtt">
+    <h2 id="t-mqtt">Linha de base MQTT</h2>
+    <p class="nota">Tamanho, em bytes, de uma publicação MQTT 3.1.1 com exatamente as mesmas leituras. A comparação é de conteúdo, não de energia: o Nautam ocupa um quadro de espectro, o MQTT ocupa bytes em uma rede de pacotes.</p>
+    <div class="indicadores" id="mqtt"></div>
+  </section>
+
+  <section aria-labelledby="t-teses" class="teses">
+    <h2 id="t-teses">Teses e leitura para decisores</h2>
+    <p class="nota">Os blocos abaixo explicam o que cada família de dados significa e como os atores da quíntupla hélice podem usá-la. A quíntupla hélice é um modelo de inovação que articula Estado, setor produtivo, academia, sociedade civil e o ambiente natural como cinco forças interdependentes.</p>
+
+    <details>
+      <summary>O que este painel demonstra, e o que não demonstra</summary>
+      <div class="corpo">
+        <p>O Nautam é um protocolo de comunicação para dispositivos conectados que representa cada leitura como um componente de frequência de um único sinal. Cada canal ocupa uma razão harmônica fixa de uma frequência fundamental, segundo a especificação HPM 1.0 (Harmonic Protocol Mapping, mapeamento do protocolo harmônico). Nesse arranjo, doze leituras viajam simultaneamente no mesmo quadro de 2.048 amostras, em vez de doze mensagens separadas.</p>
+        <p>O painel demonstra três coisas verificáveis. Em primeiro lugar, que leituras reais e heterogêneas, como concentração de poluentes e geração elétrica, podem ser normalizadas e transportadas no mesmo quadro. Em segundo lugar, que o receptor que conhece o mapa de canais recupera os valores com erro mensurável sob ruído gaussiano branco aditivo, o modelo de ruído clássico da teoria da comunicação. Em terceiro lugar, que um decodificador cego, sem conhecer o mapa, gera dezenas a centenas de falsos picos por quadro; por conseguinte, o mapa de canais é parte essencial do protocolo, e não um detalhe de implementação.</p>
+        <p>Em contrapartida, o painel não demonstra consumo de energia, alcance de rádio, interferência real nem desempenho em hardware. Tudo isso exige medição em campo, que ainda não foi feita. Por esse motivo, a declaração “simulação de sinal com dados reais; energia e interferência em campo não medidas” acompanha todos os números.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Tese da qualidade do ar: um indicador de saúde pública em tempo quase real</summary>
+      <div class="corpo">
+        <p>As séries de ar vêm de monitores oficiais da rede AirNow, mantida pela EPA (Environmental Protection Agency, Agência de Proteção Ambiental dos Estados Unidos), e chegam ao Nautam pela OpenAQ. A OpenAQ é uma plataforma sem fins lucrativos que agrega dados públicos de qualidade do ar de vários países. Os Estados Unidos entraram primeiro por um motivo técnico: na qualificação de 3 de novembro de 2026, nenhuma das 113 estações brasileiras disponíveis na OpenAQ cumpria os critérios de licença, propriedade institucional e atividade recente.</p>
+        <p>Quatro poluentes compõem a amostra. O PM2,5 reúne partículas com diâmetro de até 2,5 micrômetros, pequenas o bastante para chegar aos alvéolos pulmonares e à corrente sanguínea. O PM10 inclui partículas um pouco maiores, associadas a poeira, obras e vias sem pavimentação. O NO2 (dióxido de nitrogênio) é um marcador de combustão, sobretudo do tráfego. O O3 (ozônio troposférico) não é emitido diretamente: ele se forma pela reação do NO2 com compostos orgânicos voláteis sob luz solar, e por isso tende a atingir o pico à tarde.</p>
+        <p>A tese central é que essas leituras, lidas em conjunto e com frequência horária, funcionam como um sinal precoce de risco sanitário e de ineficiência urbana. Um pico simultâneo de NO2 e PM2,5 indica, em geral, congestionamento ou queima localizada; ozônio alto com NO2 baixo sugere transporte regional de poluição.</p>
+        <h3>Como cada ator da hélice pode usar</h3>
+        <dl>
+          <dt>Estado e decisores públicos</dt>
+          <dd>Acionar alertas de saúde, restrições de tráfego ou de queimadas com base em limiares de referência, como as diretrizes de 2021 da OMS (Organização Mundial da Saúde), que fixam 15 µg/m³ como média diária recomendada para PM2,5. Também permite avaliar, com dados horários, o efeito de uma política antes e depois de sua adoção.</dd>
+          <dt>Setor produtivo: investidores e lideranças executivas</dt>
+          <dd>Mensurar exposição a risco físico e regulatório em ativos urbanos, logísticos e industriais. Esse é o tipo de evidência exigido por relatórios ESG (Environmental, Social and Governance, ambiental, social e governança), nos quais afirmações sem série temporal tendem a ser tratadas como declarações de intenção.</dd>
+          <dt>Sociedade civil e cidadãos</dt>
+          <dd>Decidir sobre exercício ao ar livre, uso de máscara ou deslocamento de grupos sensíveis, como crianças, idosos e pessoas com doenças respiratórias. Dados abertos também fundamentam o controle social sobre o poder público.</dd>
+          <dt>Academia e ciência</dt>
+          <dd>Correlacionar exposição com internações, desempenho escolar ou produtividade, e validar modelos de dispersão atmosférica com medições independentes e licenciadas para reuso.</dd>
+          <dt>Ambiente natural</dt>
+          <dd>Ozônio elevado reduz a fotossíntese e a produtividade agrícola; material particulado altera a deposição de nutrientes em solos e corpos d’água. A série de ar é, portanto, também um indicador ecológico.</dd>
+        </dl>
+      </div>
+    </details>
+
+    <details>
+      <summary>Tese da energia: o termômetro operacional da economia brasileira</summary>
+      <div class="corpo">
+        <p>As séries de energia vêm do ONS (Operador Nacional do Sistema Elétrico), entidade que coordena a operação das usinas e linhas de transmissão do país. O recorte usado é o SIN (Sistema Interligado Nacional), a rede que conecta praticamente toda a geração e o consumo do Brasil. Os valores são publicados em MWmed (megawatt médio), isto é, a potência média entregue ao longo de uma hora.</p>
+        <p>Quatro grandezas compõem a amostra. A carga é a demanda atendida pelo sistema e acompanha de perto a atividade econômica, o clima e o horário. A geração hidráulica ainda é a base da matriz elétrica brasileira e depende do nível dos reservatórios. As gerações eólica e solar são intermitentes, ou seja, variam com o vento e a irradiação, e sua participação cresce rapidamente.</p>
+        <p>A tese central é que a composição horária da geração revela, quase em tempo real, a tensão entre segurança de suprimento, custo e descarbonização. Quando a geração solar cai ao fim da tarde e a carga se mantém, o sistema precisa de outra fonte para cobrir a diferença. Esse fenômeno é conhecido como “rampa” e aparece diretamente nas séries.</p>
+        <h3>Como cada ator da hélice pode usar</h3>
+        <dl>
+          <dt>Estado e decisores públicos</dt>
+          <dd>Acompanhar a resposta do sistema a eventos climáticos e de demanda, planejar leilões de armazenamento e de transmissão e verificar se a expansão renovável está, de fato, deslocando geração térmica.</dd>
+          <dt>Setor produtivo: investidores e lideranças executivas</dt>
+          <dd>Ajustar o consumo industrial às horas de maior oferta renovável, avaliar risco de <i>curtailment</i> (corte de geração por falta de transmissão ou de demanda) em projetos eólicos e solares e embasar contratos no mercado livre de energia.</dd>
+          <dt>Sociedade civil e cidadãos</dt>
+          <dd>Compreender por que a tarifa muda de bandeira e como a matriz elétrica do país se transforma, com uma fonte oficial e verificável em vez de interpretações de segunda mão.</dd>
+          <dt>Academia e ciência</dt>
+          <dd>Estudar previsão de carga, integração de fontes intermitentes e efeitos de secas sobre a geração hidráulica com séries públicas sob licença CC BY 4.0 (Creative Commons Atribuição 4.0), que permite reuso com citação.</dd>
+          <dt>Ambiente natural</dt>
+          <dd>A participação hidráulica, eólica e solar na carga é uma aproximação direta da intensidade de carbono da eletricidade naquela hora. Por conseguinte, a série de energia também mede pressão sobre o clima e sobre as bacias hidrográficas.</dd>
+        </dl>
+      </div>
+    </details>
+
+    <details>
+      <summary>Tese do OSINT: inteligência a partir de fontes abertas, com limites éticos explícitos</summary>
+      <div class="corpo">
+        <p>OSINT (Open Source Intelligence, inteligência de fontes abertas) designa a produção de conhecimento acionável a partir de informações publicamente disponíveis. A disciplina nasceu na análise de imprensa e de documentos oficiais e hoje inclui dados governamentais, sensores públicos e registros abertos.</p>
+        <p>A tese do Nautam Live é que o valor do OSINT não está em coletar mais dados, e sim em tornar fontes dispersas comparáveis, auditáveis e oportunas. Ar e energia são publicados por instituições diferentes, em formatos, unidades e cadências distintos. O painel os reúne em um mesmo relógio, com proveniência, licença e instante de medição preservados em cada leitura. Nesse sentido, o protocolo Nautam funciona como uma camada comum de transporte para sinais públicos heterogêneos.</p>
+        <h3>Fronteira ética e legal</h3>
+        <p>O painel usa apenas séries institucionais, agregadas e licenciadas para reuso. Não coleta nem exibe dados pessoais, nomes de contribuidores, contatos ou coordenadas exatas de estações. Também não realiza varredura de redes, captura de tráfego ou identificação de dispositivos de terceiros. Essa fronteira segue a LGPD (Lei Geral de Proteção de Dados Pessoais) e os termos de uso de cada fonte. Uma fonte só entra no painel após qualificação documentada de licença, de propriedade institucional e de ausência de dados pessoais.</p>
+        <p>Cabe observar que fontes abertas não são neutras: uma rede de monitores cobre melhor algumas regiões do que outras, e o próprio Brasil está hoje ausente da amostra de ar por falta de estações elegíveis. Ler o painel com rigor implica ler também essas lacunas.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Metodologia e limites</summary>
+      <div class="corpo">
+        <p>Cada leitura é normalizada para uma amplitude entre 0,1 e 1,0, segundo uma faixa declarada por parâmetro e unidade. Valores acima da faixa saturam e são marcados. As doze amplitudes formam um sinal composto com frequência fundamental de 16.384 Hz, amostrado a 131.072 Hz em quadros de 2.048 amostras, o que dá resolução de 64 Hz por canal.</p>
+        <p>O ruído é gerado por um gerador pseudoaleatório com semente derivada do horário da execução, o que torna cada resultado reproduzível. A SNR operacional é de 20 dB. O receptor HPM lê a magnitude de cada canal conhecido a partir da FFT (Fast Fourier Transform, transformada rápida de Fourier), o algoritmo que decompõe um sinal em suas frequências. O decodificador cego procura picos sem conhecer o mapa e serve como contraste.</p>
+        <p>O painel é atualizado a cada cinco minutos, mas as fontes têm cadências próprias. O ar é horário; a energia chega com um a dois dias de defasagem. Quando a última execução bem-sucedida tem mais de 15 minutos, o painel exibe o estado “desatualizado”.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Fontes, licenças e atribuição</summary>
+      <div class="corpo">
+        <p><b>Qualidade do ar.</b> Dados da rede AirNow (EPA, Estados Unidos), em domínio público, obtidos pela API (Application Programming Interface, interface de programação de aplicações) v3 da OpenAQ. O uso segue os termos da OpenAQ, que pedem atribuição à plataforma e ao provedor original. Valores horários podem ser revisados pela agência depois da publicação.</p>
+        <p><b>Energia.</b> Balanço de energia horário por subsistema, publicado pelo ONS no Portal de Dados Abertos e espelhado no repositório público da AWS (Amazon Web Services, serviços de nuvem da Amazon), sob licença CC BY 4.0.</p>
+        <p>A licença e o link de origem de cada série aparecem na tabela de leituras e no endpoint público <code>/api/live/public</code>.</p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="rodape-marcas">
+    <img src="/live/assets/hubstry-logo-claro.png" alt="Hubstry" width="160" height="20">
+    <img class="selo" src="/live/assets/nvidia-inception.svg" alt="Membro do programa NVIDIA Inception" width="167" height="72">
+  </div>
+  <p>Nautam é um protocolo da Hubstry. Código e especificação abertos em <a href="https://github.com/guilherme-machado-ceo/iot-protocol-hubstry" rel="noopener">GitHub</a>. Documentação da API em <a href="/docs">/docs</a>.</p>
+  <p id="gerado-em"></p>
+</footer>
+</body>
+</html>
