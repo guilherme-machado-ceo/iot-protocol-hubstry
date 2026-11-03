@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { baselineMqtt, CHAVES_SERIES, desnormalizar, executarProtocolo, normalizar, QUADRO, receptorHpm, remainingLengthBytes, transmitir, varredura, vizinhos } from '../../src/live/protocolo'
+import { baselineMqtt, BINS, CHAVES_SERIES, desnormalizar, executarProtocolo, FASES, goertzel, normalizar, QUADRO, quadroPcm, receptorHpm, remainingLengthBytes, transmitir, varredura, vizinhos } from '../../src/live/protocolo'
+import { channelTable, compositeSignal, rfftMagnitudes } from '../../src/protocol/h16'
 import type { Observacao } from '../../src/live/tipos'
 
 const base = { licenseName: 'x', licenseUrl: 'x', attribution: 'x', sourceUrl: 'x', locality: null, observedAt: new Date('2026-11-03T13:00:00Z') }
@@ -31,15 +32,44 @@ describe('transmissão e recepção', () => {
     expect(a.snrMedidoDb!).toBeGreaterThan(19); expect(a.snrMedidoDb!).toBeLessThan(21)
   })
 
-  // Mesmo sem ruído há erro residual (até ~2%): as frequências HPM não caem
-  // exatamente nos bins de 64 Hz e a energia de um canal vaza para os outros.
-  it('sem ruído, o receptor HPM recupera as amplitudes (vazamento < 3%) e não inventa canal', () => {
+  it('sem ruído, o receptor HPM recupera as amplitudes (só erro de quantização PCM) e não inventa canal', () => {
     const amps = [0.5, 0.3, null, 0.9, null, 0.1, null, null, 1, null, null, 0.7]
-    const rx = receptorHpm(transmitir(amps, 200, 1).y)
+    const rx = receptorHpm(transmitir(amps, 300, 1).y)
     rx.forEach((x, i) => {
       expect(x.presente).toBe(amps[i] != null)
-      if (amps[i] != null) expect(Math.abs(x.amplitude - amps[i]!)).toBeLessThan(0.03)
+      expect(Math.abs(x.amplitude - (amps[i] ?? 0))).toBeLessThan(1e-3)
     })
+  })
+})
+
+describe('perfil HPM-D48 coerente', () => {
+  it('48 kHz, 480 amostras, f0 6 kHz, 100 Hz por bin; os 12 canais em bins inteiros abaixo de Nyquist', () => {
+    expect(QUADRO).toMatchObject({ sampleRate: 48000, n: 480, f0: 6000 })
+    expect(BINS.every((k) => Number.isInteger(k))).toBe(true)
+    expect(Math.max(...BINS)).toBeLessThan(QUADRO.n / 2)
+  })
+
+  it('tons ortogonais: correlação cruzada máxima entre os 12 canais < 1e-10', () => {
+    const tons = channelTable(QUADRO.f0).map((c, i) => compositeSignal(QUADRO.f0, [{ a: c.a, b: c.b, phase: FASES[i] }], QUADRO.duration, QUADRO.sampleRate))
+    const dot = (a: Float64Array, b: Float64Array) => a.reduce((s, v, i) => s + v * b[i], 0)
+    let max = 0
+    for (let i = 0; i < tons.length; i++) for (let j = i + 1; j < tons.length; j++)
+      max = Math.max(max, Math.abs(dot(tons[i], tons[j])) / Math.sqrt(dot(tons[i], tons[i]) * dot(tons[j], tons[j])))
+    expect(max).toBeLessThan(1e-10)
+  })
+
+  it('Goertzel coincide com a DFT completa nos bins dos canais', () => {
+    const y = transmitir([0.5, 0.3, null, 0.9, null, 0.1, null, null, 1, null, null, 0.7], 20, 3).y
+    const mags = rfftMagnitudes(y)
+    BINS.forEach((k) => expect(goertzel(y, k)).toBeCloseTo(mags[k], 8))
+  })
+
+  it('PCM de 16 bits sem clipping mesmo com os 12 canais no máximo; fator de crista medido', () => {
+    const q = quadroPcm(Array(12).fill(1))
+    expect(q.clipping).toBe(0)
+    expect(q.picoDbfs!).toBeLessThanOrEqual(-1)
+    expect(q.fatorCristaDb!).toBeGreaterThan(0)
+    expect(q.pcm).toBeInstanceOf(Int16Array)
   })
 })
 
@@ -61,6 +91,7 @@ describe('execução sobre leituras reais', () => {
       expect(x.presente).toBe(true)
       expect(Math.abs(x.amplitudeRecebida - x.amplitudeEnviada!)).toBeLessThan(0.05)
     }
+    expect(r.metrics.quadro).toMatchObject({ perfil: 'HPM-D48', binsInteiros: true, clippingTx: 0 })
     expect(r.metrics.execucao.recall).toBe(1)
     expect(r.noiseSeed).toMatch(/^\d+$/)
     expect(r.metrics.declaracao).toContain('simulação de sinal com dados reais')
@@ -75,8 +106,8 @@ describe('varredura, vizinhos e MQTT', () => {
     expect(v.linhas.map((l) => l.snrDb)).toEqual([30, 20, 15, 10, 5, 0, -5])
     expect(v.repeticoesPorSnr).toBe(20)
     expect(v.linhas[0].receptorHpm.recall).toBe(1)
-    // Achado de 03/11: o receptor HPM atende o critério até 15 dB; o decodificador
-    // cego (decodeFft, limiar -40 dB) não atende em nenhuma SNR testada.
+    // O receptor HPM atende o critério até 15 dB; o decodificador cego
+    // (decodeFft, limiar -40 dB) não atende em nenhuma SNR testada.
     expect(v.menorSnrTestadaDb.receptorHpm).not.toBeNull()
     expect(v.menorSnrTestadaDb.decodificadorCego).toBeNull()
     expect(varredura(1)).toEqual(v)
@@ -86,7 +117,7 @@ describe('varredura, vizinhos e MQTT', () => {
     const p = vizinhos(1)
     expect(p).toHaveLength(3)
     expect(p[0].separacaoHz).toBeLessThanOrEqual(p[1].separacaoHz)
-    expect(p[0].separacaoBins).toBeCloseTo(p[0].separacaoHz / 64, 9)
+    expect(p[0].separacaoBins).toBeCloseTo(p[0].separacaoHz / 100, 9)
   })
 
   it('Remaining Length do MQTT nas fronteiras 127/128 e 16383/16384', () => {
@@ -96,6 +127,6 @@ describe('varredura, vizinhos e MQTT', () => {
   it('QoS 1 acrescenta Packet Identifier (2) e PUBACK (4)', () => {
     const m = baselineMqtt([{ chave: 'a', valor: 1, unidade: 'u', instante: 't' }])
     expect(m.trocaQos1Bytes - m.publishQos0Bytes).toBe(6)
-    expect(m.vetorAmostrasFloat64Bytes).toBe(2048 * 8)
+    expect(m.quadroPcmBytes).toBe(480 * 2)
   })
 })

@@ -87,7 +87,12 @@ function renderIndicadores(d) {
       indicador(`Valores dentro de ±${num(TOLERANCIA * 100, 0)}% da faixa, entre canais detectados`, comValor.length ? `${dentro} de ${comValor.length}` : '—', 'em relação ao valor transmitido, já limitado à faixa', comValor.length && dentro === comValor.length ? 'ok' : 'ruim'),
       indicador('Erro médio de amplitude', num(ex.maeAmplitude, 4), `≈ ${num((ex.maeAmplitude ?? 0) / 0.9 * 100, 2)}% da faixa`),
     ),
-    grupo('Canal simulado',
+    grupo('Quadro PCM',
+      indicador('Fator de crista', q.fatorCristaDb == null ? '—' : `${num(q.fatorCristaDb, 1)} dB`, q.picoDbfs == null ? (q.perfil || 'perfil anterior') : `pico ${num(q.picoDbfs, 1)} dBFS · ${q.perfil}`),
+      indicador('Clipping no PCM transmitido', q.clippingTx == null ? '—' : String(q.clippingTx), 'amostras saturadas em 16 bits', q.clippingTx == null ? '' : q.clippingTx === 0 ? 'ok' : 'ruim'),
+      indicador('Saturação no receptor', q.clippingRx == null ? '—' : String(q.clippingRx), 'amostras limitadas a ±1 após o ruído do canal emulado', q.clippingRx == null ? '' : q.clippingRx === 0 ? 'ok' : 'ruim'),
+    ),
+    grupo('Canal emulado',
       indicador('SNR medida', `${num(p.snrMedidoDb, 1)} dB`, `solicitada ${num(p.snrSolicitadoDb, 0)} dB`),
     ),
   )
@@ -141,7 +146,7 @@ function renderVarredura(d) {
   const menor = v.menorSnrTestadaDb
   const viz = d.protocolo.metricas.vizinhos || []
   $('#nota-varredura').textContent = `Menor SNR aprovada: receptor HPM ${menor.receptorHpm == null ? 'nenhuma' : menor.receptorHpm + ' dB'}; decodificador cego ${menor.decodificadorCego == null ? 'nenhuma' : menor.decodificadorCego + ' dB'}. ` + (viz.length
-    ? `Canais mais próximos: ${viz.map((p) => `${p.par} (${num(p.separacaoBins, 1)} bins, recall ${pct(p.recall)})`).join('; ')}. Um bin equivale a 64 Hz.`
+    ? `Canais mais próximos: ${viz.map((p) => `${p.par} (${num(p.separacaoBins, 1)} bins, recall ${pct(p.recall)})`).join('; ')}. Um bin equivale a ${num(d.protocolo.metricas.quadro.resolucaoHz, 0)} Hz.`
     : '')
 }
 
@@ -154,7 +159,9 @@ function renderMqtt(d) {
     indicador('Conteúdo em JSON', `${m.payloadBytes} B`, 'mesmas leituras do quadro'),
     indicador('PUBLISH QoS 0', `${m.publishQos0Bytes} B`, `${m.overheadQos0Bytes} B de cabeçalho`),
     indicador('PUBLISH + PUBACK QoS 1', `${m.trocaQos1Bytes} B`, `${m.overheadQos1Bytes} B de cabeçalho`),
-    indicador('Quadro Nautam (float64)', `${m.vetorAmostrasFloat64Bytes} B`, '2.048 amostras, sem compressão'),
+    m.quadroPcmBytes != null
+      ? indicador('Quadro Nautam (PCM 16 bits)', `${m.quadroPcmBytes} B`, '480 amostras, sem compressão')
+      : indicador('Quadro Nautam (float64)', `${m.vetorAmostrasFloat64Bytes} B`, '2.048 amostras, perfil anterior'),
   )
   box.append(el('p', { class: 'nota rodape-indicadores' }, `Fora da conta: ${m.exclui}. As duas representações são diferentes (bytes de texto contra amostras de sinal), por isso estes números não sustentam conclusão de eficiência.`))
 }

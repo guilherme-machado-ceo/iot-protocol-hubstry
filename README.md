@@ -126,15 +126,15 @@ iot-protocol-hubstry/
 
 H_N = { a/b ∈ Q⁺ : gcd(a, b) = 1, b ≤ N, a ≤ N }
 
-Cardinality: |H_N| = Σ φ(b) for b = 1 to N, where φ is Euler's totient function.
+Cardinality: |H_N| = 2 · Σ φ(b) − 1 for b = 1 to N, where φ is Euler's totient function (fractions above and below 1 mirror each other; 1/1 is counted once).
 
-Example: |H_16| = 80 unique channels.
+Example: |H_16| = 159 unique ratios.
 
 ### Omnigrid
 
 O_N = H_N × {-1, +1}
 
-|O_16| = 80 × 2 = 160 bidimensional addresses.
+|O_16| = 159 × 2 = 318 bidimensional addresses.
 
 ### Composite Signal
 
@@ -156,15 +156,15 @@ T_sync = lcm(b₁, b₂, ...) / f₀
 
 H_N = { a/b ∈ Q⁺ : gcd(a, b) = 1, b ≤ N, a ≤ N }
 
-Cardinalidade: |H_N| = Σ φ(b) para b = 1 até N, onde φ é a função totiente de Euler.
+Cardinalidade: |H_N| = 2 · Σ φ(b) − 1 para b = 1 até N, onde φ é a função totiente de Euler (as frações acima e abaixo de 1 se espelham; 1/1 conta uma vez).
 
-Exemplo: |H_16| = 80 canais únicos.
+Exemplo: |H_16| = 159 razões únicas.
 
 ### Omnigrid
 
 O_N = H_N × {-1, +1}
 
-|O_16| = 80 × 2 = 160 endereços bidimensionais.
+|O_16| = 159 × 2 = 318 endereços bidimensionais.
 
 ### Sinal Composto
 
@@ -239,7 +239,7 @@ from hale_core.hale_equation import HALEPipeline
 
 # Compute H_16
 h16 = compute_hn(16)
-print(f"|H_16| = {cardinality_hn(16)}")  # 80
+print(f"|H_16| = {cardinality_hn(16)}")  # 159
 
 # HPM 1.0 channel table
 config = HPM10Config()
@@ -316,7 +316,7 @@ from hale_core.hale_equation import HALEPipeline
 
 # Calcular H_16
 h16 = compute_hn(16)
-print(f"|H_16| = {cardinality_hn(16)}")  # 80
+print(f"|H_16| = {cardinality_hn(16)}")  # 159
 
 # Tabela de canais HPM 1.0
 config = HPM10Config()
