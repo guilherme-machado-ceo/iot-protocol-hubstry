@@ -84,7 +84,7 @@ function renderIndicadores(d) {
       indicador('Precisão da detecção', pct(ex.precisao), `${ex.fp} falsos positivos`, ex.precisao >= 0.99 ? 'ok' : 'ruim'),
     ),
     grupo('Fidelidade dos valores',
-      indicador(`Valores dentro de ±${num(TOLERANCIA * 100, 0)}% da faixa`, comValor.length ? `${dentro} de ${comValor.length}` : '—', 'erro relativo à faixa declarada da série', comValor.length && dentro === comValor.length ? 'ok' : 'ruim'),
+      indicador(`Valores dentro de ±${num(TOLERANCIA * 100, 0)}% da faixa, entre canais detectados`, comValor.length ? `${dentro} de ${comValor.length}` : '—', 'em relação ao valor transmitido, já limitado à faixa', comValor.length && dentro === comValor.length ? 'ok' : 'ruim'),
       indicador('Erro médio de amplitude', num(ex.maeAmplitude, 4), `≈ ${num((ex.maeAmplitude ?? 0) / 0.9 * 100, 2)}% da faixa`),
     ),
     grupo('Canal simulado',
@@ -94,7 +94,7 @@ function renderIndicadores(d) {
   const cego = p.canais.decodificadorCego
   const motivos = excluidas.length ? ` Excluídas: ${excluidas.map((x) => `${x.chave} (${x.motivo})`).join('; ')}.` : ''
   const sat = saturadas ? ` Saturadas (acima da faixa, valor recuperado limitado ao máximo): ${rx.filter((r) => r.clipped).map((r) => r.chave).join(', ')}.` : ''
-  $('#nota-execucao').textContent = `Execução de ${utc(p.slotUtc)} UTC, semente ${p.semente}. Detectar um canal não garante o valor exato; por isso a fidelidade é medida à parte. Na mesma execução, o decodificador cego encontrou ${cego.picosTotais} picos, dos quais ${cego.falsos} falsos.${motivos}${sat}`
+  $('#nota-execucao').textContent = `Execução de ${utc(p.slotUtc)} UTC, semente ${p.semente}. Detectar um canal não garante o valor exato; por isso a fidelidade é medida à parte, só entre os canais detectados (os não detectados já aparecem no recall). Ela compara o valor recebido com o valor transmitido: numa série saturada, o original estava fora da faixa e não é recuperável. Na mesma execução, o decodificador cego encontrou ${cego.picosTotais} picos, dos quais ${cego.falsos} falsos.${motivos}${sat}`
 }
 
 function renderLeituras(d) {
