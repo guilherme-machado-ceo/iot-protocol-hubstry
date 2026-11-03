@@ -5,7 +5,7 @@
 numpy>=1.24.0
 
 # HTTP communication with Harmonic IoT server (HarmonicProtocol.connect/register)
-requests>=2.31.0
+requests>=2.34.2
 
 # Raspberry Pi GPIO access (SensorManager — DS18B20, DHT22, BMP280 etc.)
 # Install only on Raspberry Pi hardware; skip on dev machines
