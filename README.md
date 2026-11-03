@@ -6,7 +6,7 @@
 
 [![DOI: HPG 1.0](https://img.shields.io/badge/DOI-10.5281/zenodo.19056387-blue.svg)](https://doi.org/10.5281/zenodo.19056387)
 [![DOI: HALE](https://img.shields.io/badge/DOI-10.5281/zenodo.18901934-blue.svg)](https://doi.org/10.5281/zenodo.18901934)
-[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-lightgrey.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-nautam--iot-blue.svg)](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](hale_core/)
 [![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B.svg)](dashboard.py)
@@ -105,7 +105,7 @@ iot-protocol-hubstry/
 │   ├── en/                     # English documentation
 │   └── pt/                     # Portuguese documentation
 │
-├── LICENSE                     # CC BY 4.0
+├── LICENSE                     # BSL 1.1
 └── README.md                   # This file
 ```
 
@@ -460,7 +460,16 @@ Este repositório faz parte do ecossistema Hubstry:
 
 ## [EN] License
 
-This project is licensed under **CC BY 4.0**. See [LICENSE](LICENSE).
+This project's source code is licensed under the **Business Source License 1.1 (BSL 1.1)**. See [LICENSE](LICENSE).
+
+- Free: reading, modifying, redistributing, non-production use, and non-commercial academic research, teaching or personal evaluation.
+- Commercial license required: any other production use, including use by for-profit entities, hosted services, or embedding in products. Contact guilhermemachado.ceo@hubstry.dev.
+- Each version converts to Apache License 2.0 four years after its first publication.
+- Versions published before 2026-11-03 remain available under the license they were published with.
+
+Copyright (c) 2024-2026 Guilherme Gonçalves Machado.
+
+The papers below keep their own licenses (CC BY 4.0) and do not change the license of the code.
 
 > **Note on Paper 1:** The HALE equation is referenced from
 > DOI: [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) (CC BY 4.0)
@@ -471,7 +480,16 @@ This project is licensed under **CC BY 4.0**. See [LICENSE](LICENSE).
 
 ## [PT-BR] Licença
 
-Este projeto está licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
+O código-fonte deste projeto está licenciado sob a **Business Source License 1.1 (BSL 1.1, licença de código-fonte disponível)**. Veja [LICENSE](LICENSE).
+
+- Livre: ler, modificar, redistribuir, usar fora de produção e usar em pesquisa acadêmica, ensino ou avaliação pessoal sem fins comerciais.
+- Exige licença comercial: qualquer outro uso em produção, inclusive por empresas com fins lucrativos, como serviço hospedado ou embarcado em produtos. Contato: guilhermemachado.ceo@hubstry.dev.
+- Cada versão passa automaticamente para a Apache License 2.0 quatro anos após sua primeira publicação.
+- Versões publicadas antes de 03/11/2026 continuam disponíveis sob a licença com que foram publicadas.
+
+Copyright (c) 2024-2026 Guilherme Gonçalves Machado.
+
+Os papers abaixo mantêm suas próprias licenças (CC BY 4.0), que não alteram a licença do código.
 
 > **Nota sobre Paper 1:** A equação HALE é referenciada do paper
 > DOI: [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) (CC BY 4.0)

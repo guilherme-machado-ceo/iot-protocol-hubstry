@@ -111,14 +111,14 @@ jobs:
       run: |
         echo "Checking for proper license headers..."
         
-        # Check that LICENSE file exists and contains CC BY-NC-SA 4.0
-        if ! grep -q "Creative Commons Attribution-NonCommercial-ShareAlike 4.0" LICENSE; then
-          echo "ERROR: LICENSE file does not contain CC BY-NC-SA 4.0 license"
+        # Check that LICENSE file exists and contains the Business Source License 1.1
+        if ! grep -q "Business Source License 1.1" LICENSE; then
+          echo "ERROR: LICENSE file does not contain BSL 1.1"
           exit 1
         fi
         
         # Check copyright notice in key files
-        if ! grep -q "Copyright (c) 2024 Guilherme Gonçalves Machado" README.md; then
+        if ! grep -q "Copyright (c) 2024-2026 Guilherme Gonçalves Machado" README.md; then
           echo "ERROR: Copyright notice missing in README.md"
           exit 1
         fi
