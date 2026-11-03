@@ -24,16 +24,15 @@ permissions:
 jobs:
   espelhar:
     runs-on: ubuntu-latest
-    # O push usa a deploy key ESPELHO_MASTER_DEPLOY_KEY (SSH), não o GITHUB_TOKEN.
-    # Assim a master pode ser protegida por ruleset com exceção só para essa chave.
+    # Push com o GITHUB_TOKEN. A tentativa com deploy key (PR #46) falhou: a chave
+    # foi gerada no PowerShell com -N '""', que grava uma senha literal de duas
+    # aspas, e o checkout não usa chave com senha. Refazer a chave fica para depois.
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.ESPELHO_MASTER_DEPLOY_KEY }}
-          persist-credentials: true
 
       # Proteção contra execução atrasada: um push antigo pode rodar depois de
       # um mais novo. Espelha sempre a ponta ATUAL da main, nunca o commit
