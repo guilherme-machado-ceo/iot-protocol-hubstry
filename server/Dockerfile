@@ -49,6 +49,8 @@ COPY --from=build /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
 COPY package.json ./
+# O npm embutido na imagem base não é usado em execução e traz alertas do Trivy.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 USER node
 CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
 
@@ -65,6 +67,8 @@ COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 COPY prisma/schema.prisma ./prisma/schema.prisma
 COPY package.json ./
+# O npm embutido na imagem base não é usado em execução e traz alertas do Trivy.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 USER node
 EXPOSE 3001
 CMD ["node", "dist/index.js"]

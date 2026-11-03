@@ -28,7 +28,7 @@ function resolveCorsOrigin(): string | string[] | boolean {
   return true
 }
 
-async function build() {
+export async function build() {
   await server.register(helmet)
   await server.register(cors, {
     origin: resolveCorsOrigin(),
@@ -58,6 +58,9 @@ async function build() {
   await server.register(swaggerUi, {
     routePrefix: '/docs',
   })
+
+  // Raiz leva à documentação interativa, em vez de 404.
+  server.get('/', { schema: { hide: true } }, async (_req, reply) => reply.redirect('/docs'))
 
   await server.register(healthRoutes, { prefix: '/api' })
   await server.register(harmonicRoutes, { prefix: '/api/harmonic' })
@@ -110,4 +113,5 @@ async function main() {
   }
 }
 
-main()
+// Nos testes (vitest), o módulo é importado só para montar o app, sem abrir porta.
+if (!process.env.VITEST) void main()
