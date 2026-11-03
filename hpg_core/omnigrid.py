@@ -28,7 +28,12 @@ def compute_hn(N: int = 16) -> Set[Fraction]:
 
     Returns:
         Set of unique Fraction objects representing H_N.
+
+    Raises:
+        ValueError: if N < 1.
     """
+    if N < 1:
+        raise ValueError("N must be >= 1")
     hn = set()
     for b in range(1, N + 1):
         for a in range(1, N + 1):
@@ -53,7 +58,12 @@ def cardinality_hn(N: int = 16) -> int:
 
     Returns:
         Cardinality of H_N, always equal to len(compute_hn(N)).
+
+    Raises:
+        ValueError: if N < 1.
     """
+    if N < 1:
+        raise ValueError("N must be >= 1")
     return 2 * sum(euler_totient(b) for b in range(1, N + 1)) - 1
 
 
