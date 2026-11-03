@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Nautam Live — tarefa 1 (E1): qualifica as estações brasileiras da OpenAQ v3.
 # Somente leitura. Rodar no CloudShell (sa-east-1) como admin-solo:
-#   bash qualificar-openaq.sh
+#   bash qualificar-openaq.sh [ISO]   (padrão: BR; ex.: US, GB, CL)
 # Lê a chave do Secrets Manager e nunca a imprime. Não imprime coordenadas,
 # nomes de contribuidores nem contatos. Critério de elegibilidade (fail-closed):
 #   estação fixa (isMobile=false), monitor de referência (isMonitor=true),
@@ -10,6 +10,7 @@
 
 export AWS_PAGER="" AWS_REGION=sa-east-1
 BASE=https://api.openaq.org/v3
+ISO="${1:-BR}"
 K=$(aws secretsmanager get-secret-value --secret-id /nautam/production/openaq-api-key --query SecretString --output text) || { echo "PAROU: não li o segredo"; exit 1; }
 K=$(printf '%s' "$K" | tr -d '[:space:]')
 T=$(mktemp -d); trap 'rm -rf "$T"; unset K' EXIT
@@ -27,10 +28,10 @@ fi
 grep -i '^x-ratelimit' "$T/h" | sed 's/^/  /' || true
 echo "  ok: chave aceita (${#K} caracteres)"
 
-echo "== 2. Estações no Brasil"
+echo "== 2. Estações em $ISO"
 : > "$T/locs.jsonl"; P=1
 while :; do
-  C=$(get "/locations?iso=BR&limit=1000&page=$P" "$T/l.json")
+  C=$(get "/locations?iso=$ISO&limit=1000&page=$P" "$T/l.json")
   [ "$C" = "200" ] || { echo "PAROU: /locations HTTP $C"; exit 1; }
   jq -c '.results[]' "$T/l.json" >> "$T/locs.jsonl"
   N=$(jq '.results | length' "$T/l.json"); [ "$N" -lt 1000 ] && break; P=$((P+1)); sleep 1
@@ -67,7 +68,7 @@ jq -c --slurpfile L "$T/lic.json" --arg lim "$LIMITE" "$CLASSE"'
      parametros: [.sensors[].parameter.name] | unique}' "$T/locs.jsonl" > "$T/eleg.jsonl"
 E=$(wc -l < "$T/eleg.jsonl")
 echo "  elegíveis: $E de $TOTAL"
-jq -r '"  \(.id) | \(.provedor) | \(.proprietario) | \(.localidade // "-") | última \(.ultima) | \(.licencas|join(", ")) | \(.parametros|join(","))"' "$T/eleg.jsonl" | head -40
+jq -r '"  \(.id) | \(.provedor) | \(.proprietario) | \(.localidade // "-") | última \(.ultima) | \(.licencas|join(", ")) | \(.parametros|join(","))"' "$T/eleg.jsonl" | head -15
 
 echo "== 5. Classificação de todas as estações (contagem)"
 jq -r --slurpfile L "$T/lic.json" --arg lim "$LIMITE" "$CLASSE"' classe($L[0]; $lim)' "$T/locs.jsonl" | sort | uniq -c | sort -rn | sed 's/^/  /'
