@@ -19,9 +19,21 @@
 
 <main>
   <section class="abertura">
-    <h1>Dados públicos reais, transmitidos por um protocolo harmônico, com as contas à mostra.</h1>
-    <p>A cada cinco minutos, o Nautam Live consulta as fontes e processa as leituras mais recentes disponíveis de qualidade do ar nos Estados Unidos e do balanço de energia do Brasil. Cada fonte tem cadência própria, de modo que nem toda consulta traz uma medição nova. Em seguida, o painel codifica essas leituras em um único sinal composto pelo protocolo Nautam, aplica ruído controlado, decodifica o sinal e publica o que se recuperou, o que se perdeu e o tamanho estimado da mesma mensagem no MQTT (Message Queuing Telemetry Transport, transporte de telemetria por fila de mensagens), o protocolo de referência da IoT (Internet of Things, internet das coisas).</p>
+    <h1>Dados públicos reais, codificados num sinal harmônico digital, com as contas à mostra.</h1>
+    <p>O Nautam é uma tecnologia de comunicação digital em desenvolvimento pela Hubstry. Ele investiga como representar várias séries de informação num único sinal composto por frequências harmonicamente relacionadas. Cada série é convertida na amplitude de um canal de frequência, e um receptor que conhece essa organização identifica os canais e recupera os valores.</p>
+    <p>Este painel demonstra o processamento digital dessa tecnologia em execuções periódicas. A cada cinco minutos, o sistema consulta fontes públicas de qualidade do ar e de energia e codifica as leituras mais recentes disponíveis num quadro digital. O quadro passa por um canal emulado em software, com ruído controlado, e é processado pelo receptor. As métricas de cada execução ficam disponíveis para consulta.</p>
     <p class="declaracao" id="declaracao">simulação de sinal com dados reais; energia e interferência em campo não medidas</p>
+  </section>
+
+  <section aria-labelledby="t-etapas">
+    <h2 id="t-etapas">Como funciona</h2>
+    <ol class="etapas">
+      <li><b>Dados públicos reais</b><span>Monitores AirNow (EPA, Estados Unidos), acessados pela plataforma OpenAQ, e dados de energia do ONS (Brasil).</span></li>
+      <li><b>Organização harmônica</b><span>Cada série é representada pela amplitude de um canal de frequência definido pelo mapa HPM.</span></li>
+      <li><b>Quadro digital HPM-D48</b><span>Até 12 séries, amostragem de 48 kHz, PCM de 16 bits e quadros de 10 ms.</span></li>
+      <li><b>Canal emulado</b><span>O quadro atravessa um modelo digital de canal com ruído gaussiano controlado e reproduzível.</span></li>
+      <li><b>Recepção digital</b><span>O algoritmo de Goertzel calcula as 12 frequências conhecidas e estima as amplitudes.</span></li>
+    </ol>
   </section>
 
   <section aria-labelledby="t-indicadores">
@@ -31,7 +43,7 @@
   </section>
 
   <section aria-labelledby="t-leituras">
-    <h2 id="t-leituras">Leituras transmitidas</h2>
+    <h2 id="t-leituras">Leituras codificadas no quadro</h2>
     <p class="nota">Cada linha é uma série pública. A coluna “recuperado” mostra o valor que saiu do outro lado do canal simulado. Clique em uma linha para ver o histórico.</p>
     <div class="tabela-rolagem">
       <table id="leituras">
@@ -72,16 +84,57 @@
     <p class="nota">Os blocos abaixo explicam o que cada família de dados significa e como os atores da quíntupla hélice podem usá-la. A quíntupla hélice é um modelo de inovação que articula Estado, setor produtivo, academia, sociedade civil e o ambiente natural como cinco forças interdependentes.</p>
 
     <details>
-      <summary>O que este painel demonstra, e o que não demonstra</summary>
+      <summary>Estágio de maturidade e agenda de validação</summary>
       <div class="corpo">
-        <p>O Nautam é um protocolo de comunicação para dispositivos conectados que representa cada leitura como um componente de frequência de um único sinal. Cada canal ocupa uma razão harmônica fixa de uma frequência fundamental, segundo a especificação HPM 1.0 (Harmonic Protocol Mapping, mapeamento do protocolo harmônico). Nesse arranjo, doze leituras viajam simultaneamente no mesmo quadro digital de 10 milissegundos, em vez de doze mensagens separadas.</p>
-        <p>O painel demonstra três coisas verificáveis. Em primeiro lugar, que leituras reais e heterogêneas, como concentração de poluentes e geração elétrica, podem ser normalizadas e transportadas no mesmo quadro. Em segundo lugar, que o receptor que conhece o mapa de canais recupera os valores com erro mensurável sob ruído gaussiano branco aditivo, o modelo de ruído clássico da teoria da comunicação. Em terceiro lugar, que um decodificador cego, sem conhecer o mapa, gera dezenas a centenas de falsos picos por quadro; por conseguinte, o mapa de canais é parte essencial do protocolo, e não um detalhe de implementação.</p>
-        <p>Em contrapartida, o painel não demonstra consumo de energia, alcance de rádio, interferência real nem desempenho em hardware. Tudo isso exige medição em campo, que ainda não foi feita. Por esse motivo, a declaração “simulação de sinal com dados reais; energia e interferência em campo não medidas” acompanha todos os números.</p>
+        <p>A camada digital do Nautam está no estágio de prova de conceito experimental, que corresponde ao TRL (Technology Readiness Level, nível de maturidade tecnológica) 3. Nessa escala de 1 a 9, o nível 3 indica que as funções críticas da proposta foram implementadas e demonstradas em experimentos digitais reproduzíveis. A validação em equipamento físico é a etapa seguinte da agenda.</p>
+        <h3>Validado em software</h3>
+        <ul>
+          <li><b>Modelo matemático.</b> Conjunto harmônico H16 com 159 razões, Omnigrid com 318 endereços e tabela HPM de 12 canais.</li>
+          <li><b>Separabilidade dos canais.</b> No perfil HPM-D48, o produto interno normalizado entre os tons individuais, no quadro coerente de 480 amostras e sem ruído, fica abaixo de 10⁻¹⁰. Isso demonstra que os canais são matematicamente separáveis nas condições testadas.</li>
+          <li><b>Recepção sob ruído.</b> Nas varreduras sintéticas de referência, com 20 quadros por nível de SNR (Signal-to-Noise Ratio, relação sinal-ruído), o receptor atinge recall de pelo menos 95% e precisão de pelo menos 99% até 15 dB. O painel mostra sempre a varredura mais recente, e esses valores caracterizam o ensaio digital.</li>
+          <li><b>Operação contínua com dados reais.</b> Cada execução publica métricas e semente, o que permite reproduzi-la.</li>
+        </ul>
+        <h3>Agenda de validação</h3>
+        <div class="tabela-rolagem"><table>
+          <thead><tr><th>Etapa</th><th>Objetivo</th></tr></thead>
+          <tbody>
+            <tr><td>Quadro binário completo</td><td>Preâmbulo, sincronização, verificação de integridade e medição da taxa de erro de bits.</td></tr>
+            <tr><td>Artefatos digitais verificáveis</td><td>Quadros PCM/WAV transmitidos e recebidos publicados com manifesto e hashes, para reprodução independente.</td></tr>
+            <tr><td>Ruído ambiental real</td><td>Uso de amostras capturadas por receptores públicos de rádio definido por software, condicionado à compatibilidade técnica e às permissões de uso.</td></tr>
+            <tr><td>Transmissão física</td><td>Ensaios com parceiros de pesquisa e indústria que disponham de equipamento adequado.</td></tr>
+            <tr><td>Desempenho em campo</td><td>Alcance, consumo, interferência e comportamento em aplicações específicas.</td></tr>
+          </tbody>
+        </table></div>
       </div>
     </details>
 
     <details>
-      <summary>Tese da qualidade do ar: um indicador de saúde pública em tempo quase real</summary>
+      <summary>Posição no estado da arte</summary>
+      <div class="corpo">
+        <p>O Nautam investiga uma abordagem de comunicação multicomponente, na qual diferentes informações são representadas simultaneamente em componentes de frequência.</p>
+        <p>Uma referência importante desse campo é o OFDM (Orthogonal Frequency-Division Multiplexing, multiplexação por divisão de frequências ortogonais). Essa técnica é usada no Wi-Fi e em tecnologias celulares como o LTE. O OFDM organiza subportadoras regularmente espaçadas, projetadas para serem ortogonais entre si.</p>
+        <p>O Nautam explora uma organização diferente: seus canais são definidos por razões harmônicas de uma frequência fundamental, e não por uma sequência uniforme de subportadoras. No perfil HPM-D48, essas frequências são alinhadas a posições exatas da análise digital. O receptor usa o algoritmo de Goertzel para calcular apenas as frequências previstas pelo mapa de canais.</p>
+        <p>No universo da internet das coisas, tecnologias como LoRaWAN e NB-IoT (Narrowband Internet of Things, internet das coisas de banda estreita) já oferecem conectividade estabelecida para sensores. O Nautam não se apresenta como substituto delas. A pesquisa investiga em quais aplicações a organização harmônica traz vantagens mensuráveis, segundo cinco critérios: uso do espectro, tolerância a ruído e a distorções, custo de processamento no receptor, endereçamento de sensores e desempenho em canais específicos.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Frentes de pesquisa</summary>
+      <div class="corpo">
+        <div class="tabela-rolagem"><table>
+          <thead><tr><th>Frente</th><th>O que se investiga</th></tr></thead>
+          <tbody>
+            <tr><td>Matemática aplicada</td><td>Construção de espaços de canais e endereços a partir de razões harmônicas.</td></tr>
+            <tr><td>Processamento de sinais</td><td>Composição e separação de componentes de frequência.</td></tr>
+            <tr><td>Comunicação digital</td><td>Transporte de dados, sincronização e correção de erros.</td></tr>
+            <tr><td>Internet das coisas</td><td>Aplicação do mecanismo à comunicação entre sensores e equipamentos.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Tese da qualidade do ar: um indicador de saúde pública com dados horários recentes</summary>
       <div class="corpo">
         <p>As séries de ar vêm de monitores oficiais da rede AirNow, mantida pela EPA (Environmental Protection Agency, Agência de Proteção Ambiental dos Estados Unidos), e chegam ao Nautam pela OpenAQ. A OpenAQ é uma plataforma sem fins lucrativos que agrega dados públicos de qualidade do ar de vários países. Os Estados Unidos entraram primeiro por um motivo técnico: na qualificação de 3 de novembro de 2026, nenhuma das 113 estações brasileiras disponíveis na OpenAQ cumpria os critérios automáticos adotados nesta qualificação: estação fixa, monitor de referência, leitura nas últimas 24 horas e licença vigente que permita uso comercial e redistribuição. Isso não significa ausência de medições brasileiras na plataforma, e sim que nenhuma delas passou por esse filtro.</p>
         <p>Quatro poluentes compõem a amostra. O PM2,5 reúne partículas com diâmetro de até 2,5 micrômetros, pequenas o bastante para chegar aos alvéolos pulmonares e à corrente sanguínea. O PM10 inclui partículas um pouco maiores, associadas a poeira, obras e vias sem pavimentação. O NO2 (dióxido de nitrogênio) é um marcador de combustão, sobretudo do tráfego. O O3 (ozônio troposférico) não é emitido diretamente: ele se forma pela reação do NO2 com compostos orgânicos voláteis sob luz solar, e por isso tende a atingir o pico à tarde.</p>
@@ -107,7 +160,7 @@
       <div class="corpo">
         <p>As séries de energia vêm do ONS (Operador Nacional do Sistema Elétrico), entidade que coordena a operação das usinas e linhas de transmissão do país. O recorte usado é o SIN (Sistema Interligado Nacional), a rede que conecta praticamente toda a geração e o consumo do Brasil. Os valores são publicados em MWmed (megawatt médio), isto é, a potência média entregue ao longo de uma hora.</p>
         <p>Quatro grandezas compõem a amostra. A carga é a demanda atendida pelo sistema e acompanha de perto a atividade econômica, o clima e o horário. A geração hidráulica ainda é a base da matriz elétrica brasileira e depende do nível dos reservatórios. As gerações eólica e solar são intermitentes, ou seja, variam com o vento e a irradiação, e sua participação cresce rapidamente.</p>
-        <p>A tese central é que a composição horária da geração revela, quase em tempo real, a tensão entre segurança de suprimento, custo e descarbonização. Quando a geração solar cai ao fim da tarde e a carga se mantém, o sistema precisa de outra fonte para cobrir a diferença. Esse fenômeno é conhecido como “rampa” e aparece diretamente nas séries.</p>
+        <p>A tese central é que a composição horária da geração revela, com dados horários publicados em um a dois dias, a tensão entre segurança de suprimento, custo e descarbonização. Quando a geração solar cai ao fim da tarde e a carga se mantém, o sistema precisa de outra fonte para cobrir a diferença. Esse fenômeno é conhecido como “rampa” e aparece diretamente nas séries.</p>
         <h3>Como cada ator da hélice pode usar</h3>
         <dl>
           <dt>Estado e decisores públicos</dt>
@@ -128,7 +181,7 @@
       <summary>Tese do OSINT: inteligência a partir de fontes abertas, com limites éticos explícitos</summary>
       <div class="corpo">
         <p>OSINT (Open Source Intelligence, inteligência de fontes abertas) designa a produção de conhecimento acionável a partir de informações publicamente disponíveis. A disciplina nasceu na análise de imprensa e de documentos oficiais e hoje inclui dados governamentais, sensores públicos e registros abertos.</p>
-        <p>A tese do Nautam Live é que o valor do OSINT não está em coletar mais dados, e sim em tornar fontes dispersas comparáveis, auditáveis e oportunas. Ar e energia são publicados por instituições diferentes, em formatos, unidades e cadências distintos. O painel os reúne em um mesmo relógio, com proveniência, licença e instante de medição preservados em cada leitura. Nesse sentido, o protocolo Nautam funciona como uma camada comum de transporte para sinais públicos heterogêneos.</p>
+        <p>A tese do Nautam Live é que o valor do OSINT não está em coletar mais dados, e sim em tornar fontes dispersas comparáveis, auditáveis e oportunas. Ar e energia são publicados por instituições diferentes, em formatos, unidades e cadências distintos. O painel os reúne em um mesmo relógio, com proveniência, licença e instante de medição preservados em cada leitura. Nesse sentido, o Nautam é investigado como uma camada comum de codificação digital para sinais públicos heterogêneos.</p>
         <h3>Fronteira ética e legal</h3>
         <p>O painel usa apenas séries institucionais, agregadas e licenciadas para reuso. Não coleta nem exibe dados pessoais, nomes de contribuidores, contatos ou coordenadas exatas de estações. Também não realiza varredura de redes, captura de tráfego ou identificação de dispositivos de terceiros. Essa fronteira segue a LGPD (Lei Geral de Proteção de Dados Pessoais) e os termos de uso de cada fonte. Uma fonte só entra no painel após qualificação documentada de licença, de origem oficial e de ausência de dados pessoais. Os critérios de licença e de atividade são verificados por script; a origem oficial é conferida manualmente.</p>
         <p>Cabe observar que fontes abertas não são neutras: uma rede de monitores cobre melhor algumas regiões do que outras, e o próprio Brasil está hoje ausente da amostra de ar por falta de estações elegíveis. Ler o painel com rigor implica ler também essas lacunas.</p>
@@ -154,6 +207,17 @@
       </div>
     </details>
   </section>
+  <section aria-labelledby="t-parceria" class="parceria">
+    <h2 id="t-parceria">Trabalhe com a Hubstry</h2>
+    <p>O Nautam está aberto a parcerias de P&amp;D (pesquisa e desenvolvimento) com laboratórios, centros de pesquisa, integradores e fabricantes.</p>
+    <div class="ofertas">
+      <div class="oferta"><h3>Licenciamento de tecnologia</h3><p class="para">Empresas de P&amp;D e desenvolvedores</p><p>Acesso ao código e aos módulos conforme a BSL 1.1 (Business Source License, licença de código-fonte disponível), com licença comercial negociada com a Hubstry para usos em produção.</p></div>
+      <div class="oferta"><h3>Estudo de viabilidade</h3><p class="para">Empresas com equipe de engenharia</p><p>Análise de uma aplicação específica, avaliação de requisitos e comparação com as tecnologias em uso.</p></div>
+      <div class="oferta"><h3>Projeto de P&amp;D conjunto</h3><p class="para">Indústrias, integradores e laboratórios</p><p>Prova de conceito desenvolvida em torno de um problema real do parceiro.</p></div>
+    </div>
+    <p class="nota"><b>Setores com aplicações em investigação:</b> IoT industrial (temperatura, vibração, pressão), cidades inteligentes e meio ambiente (ar, ruído, água), energia e utilities (medição e monitoramento de rede), logística e infraestrutura (ativos e condições de operação).</p>
+    <p><a class="contato" href="mailto:guilhermemachado.ceo@hubstry.dev">guilhermemachado.ceo@hubstry.dev</a></p>
+  </section>
 </main>
 
 <footer class="rodape">
@@ -161,7 +225,7 @@
     <img src="/live/assets/hubstry-logo-claro.png" alt="Hubstry" width="160" height="20">
     <img class="selo" src="/live/assets/nvidia-inception.svg" alt="Membro do programa NVIDIA Inception" width="167" height="72">
   </div>
-  <p>Nautam é um protocolo da Hubstry. Código e especificação abertos em <a href="https://github.com/guilherme-machado-ceo/iot-protocol-hubstry" rel="noopener">GitHub</a>. Documentação da API em <a href="/docs">/docs</a>.</p>
+  <p>Nautam é uma tecnologia da Hubstry. Código-fonte disponível no <a href="https://github.com/guilherme-machado-ceo/iot-protocol-hubstry" rel="noopener">GitHub</a> sob a BSL 1.1. Documentação da API em <a href="/docs">/docs</a>.</p>
   <p id="gerado-em"></p>
 </footer>
 </body>

@@ -13,9 +13,9 @@
 [![Next.js 15](https://img.shields.io/badge/Sim_Web-Next.js_15-black.svg)](demo-web/harmonic-demo/)
 [![Hubstry](https://img.shields.io/badge/by-Hubstry%20Deep%20Tech-0E8A7A.svg)](https://hubstry.dev)
 
-> *A new communication standard for connected devices — built on the mathematics of sound.*
+> *A harmonic approach to digital communication for connected devices — built on the mathematics of sound.*
 >
-> *Um novo padrão de comunicação para dispositivos conectados — construído sobre a matemática do som.*
+> *Uma abordagem harmônica de comunicação digital para dispositivos conectados — construída sobre a matemática do som.*
 
 </div>
 
@@ -41,33 +41,39 @@
 
 ## [EN] What is Nautam?
 
-Nautam is the commercial name for an IoT communication protocol based on the **harmonic series** — the same mathematical principle that governs how musical instruments produce sound. The underlying framework is the **HALE + HPG Framework** (Harmonic Addressing & Labeling Equation + Harmonic Protocol Grid).
+Nautam is an IoT digital communication technology in development by Hubstry, based on the **harmonic series** — the same mathematical principle that governs how musical instruments produce sound. The underlying framework is the **HALE + HPG Framework** (Harmonic Addressing & Labeling Equation + Harmonic Protocol Grid).
 
-Instead of devices competing for bandwidth (like 500 workers shouting in the same hallway), Nautam assigns each device its own precise communication slot derived mathematically from a master frequency — like an orchestra where every musician plays in perfect relationship to the conductor's beat.
+Instead of devices competing for bandwidth, Nautam investigates assigning each device its own precise communication slot derived mathematically from a master frequency — like an orchestra where every musician plays in perfect relationship to the conductor's beat.
 
-**The result:**
+**Current stage — digital proof of concept (TRL 3):**
 
-- Native synchronization — no negotiation overhead
-- Zero interference — mathematically guaranteed orthogonality
-- 50–65% less energy consumption vs. conventional protocols (MQTT, CoAP, DDS)
-- Runs on any hardware — pure software implementation, no specialized chips
-- Infinitely scalable — adding a device is as simple as assigning a new harmonic
+- Mathematical model implemented: harmonic set H16 (159 ratios), Omnigrid (318 addresses) and the 12-channel HPM table
+- Coherent digital frame (HPM-D48 profile: 48 kHz, 480 samples, 16-bit PCM): normalized inner product between channel tones below 10⁻¹⁰ in the tested conditions
+- Goertzel receiver for the known channels, characterized in reproducible synthetic noise sweeps
+- Continuous public demonstration with real air-quality (AirNow via OpenAQ) and energy (ONS) data: **Nautam Live** panel at `/live`
+
+**Validation agenda:** complete binary frame (preamble, synchronization, integrity check, bit error rate); verifiable digital artifacts (published PCM/WAV frames with hashes); real-world noise samples, subject to technical and licensing feasibility; physical transmission and field performance with research and industry partners.
+
+Nautam does not position itself as a replacement for established IoT connectivity such as LoRaWAN or NB-IoT. The research investigates where harmonic channel organization brings measurable gains in specific applications.
 
 ---
 
 ## [PT-BR] O que é o Nautam?
 
-Nautam é o nome comercial de um protocolo de comunicação IoT baseado na **série harmônica** — o mesmo princípio matemático que governa como instrumentos musicais produzem som. O framework subjacente é o **Framework HALE + HPG** (Harmonic Addressing & Labeling Equation + Harmonic Protocol Grid).
+Nautam é uma tecnologia de comunicação digital para IoT em desenvolvimento pela Hubstry, baseada na **série harmônica** — o mesmo princípio matemático que governa como instrumentos musicais produzem som. O framework subjacente é o **Framework HALE + HPG** (Harmonic Addressing & Labeling Equation + Harmonic Protocol Grid).
 
-Em vez de dispositivos competirem por largura de banda (como 500 trabalhadores gritando no mesmo corredor), o Nautam atribui a cada dispositivo seu próprio slot de comunicação preciso, derivado matematicamente a partir de uma frequência mestra — como uma orquestra onde cada músico toca em relação perfeita com a batida do regente.
+Em vez de dispositivos competirem por largura de banda, o Nautam investiga atribuir a cada dispositivo seu próprio slot de comunicação preciso, derivado matematicamente a partir de uma frequência mestra — como uma orquestra onde cada músico toca em relação perfeita com a batida do regente.
 
-**O resultado:**
+**Estágio atual — prova de conceito digital (TRL 3, Technology Readiness Level, nível de maturidade tecnológica):**
 
-- Sincronização nativa — sem sobrecarga de negociação
-- Interferência zero — ortogonalidade matematicamente garantida
-- 50–65% menos consumo de energia vs. protocolos convencionais (MQTT, CoAP, DDS)
-- Roda em qualquer hardware — implementação puramente em software, sem chips especializados
-- Escalabilidade infinita — adicionar um dispositivo é tão simples quanto atribuir uma nova harmônica
+- Modelo matemático implementado: conjunto harmônico H16 (159 razões), Omnigrid (318 endereços) e tabela HPM de 12 canais
+- Quadro digital coerente (perfil HPM-D48: 48 kHz, 480 amostras, PCM de 16 bits): produto interno normalizado entre os tons dos canais abaixo de 10⁻¹⁰ nas condições testadas
+- Receptor Goertzel para os canais conhecidos, caracterizado em varreduras de ruído sintético reproduzíveis
+- Demonstração pública contínua com dados reais de qualidade do ar (AirNow via OpenAQ) e de energia (ONS): painel **Nautam Live** em `/live`
+
+**Agenda de validação:** quadro binário completo (preâmbulo, sincronização, verificação de integridade, taxa de erro de bits); artefatos digitais verificáveis (quadros PCM/WAV publicados com hashes); amostras de ruído do mundo real, condicionadas à viabilidade técnica e de licenciamento; transmissão física e desempenho em campo com parceiros de pesquisa e indústria.
+
+O Nautam não se apresenta como substituto de tecnologias de conectividade IoT estabelecidas, como LoRaWAN e NB-IoT. A pesquisa investiga em quais aplicações a organização harmônica dos canais traz ganhos mensuráveis.
 
 ---
 
@@ -392,7 +398,7 @@ Nautam é a implementação comercial da família HPG (Harmonic Protocol Grid):
 
 ---
 
-## [EN] Applications
+## [EN] Applications under investigation
 
 - Smart cities — traffic, energy, water, waste sensor networks
 - Industrial IoT — factory automation, predictive maintenance, logistics
@@ -402,7 +408,7 @@ Nautam é a implementação comercial da família HPG (Harmonic Protocol Grid):
 
 ---
 
-## [PT-BR] Aplicações
+## [PT-BR] Aplicações em investigação
 
 - Cidades inteligentes — redes de sensores de trânsito, energia, água, resíduos
 - IoT industrial — automação de fábricas, manutenção preditiva, logística
