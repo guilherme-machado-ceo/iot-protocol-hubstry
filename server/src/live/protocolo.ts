@@ -1,18 +1,32 @@
-// Nautam Live — E2: leituras reais transmitidas por simulação de sinal HPM 1.0.
-// Cada leitura vira a amplitude de um canal; o quadro recebe ruído gaussiano
-// (AWGN) com semente registrada e é decodificado de duas formas:
-//  - receptor HPM: conhece a tabela de 12 canais e lê só esses bins da FFT;
+// Nautam Live — leituras reais transmitidas num quadro digital do perfil HPM-D48.
+// Perfil coerente (Entrega 1 do plano digital): 48 kHz, 480 amostras (10 ms),
+// f0 = 6 kHz, resolução de 100 Hz. Todos os 12 canais caem em bins inteiros
+// (f0/Δf = 60 e os denominadores da tabela HPM dividem 60), então não há
+// vazamento espectral entre canais nem calibração de ganho.
+// Cada leitura vira a amplitude de um canal; o quadro é quantizado em PCM de
+// 16 bits com escala fixa (sem clipping por construção), recebe ruído com
+// semente registrada e é decodificado de duas formas:
+//  - receptor HPM: algoritmo de Goertzel nos 12 bins conhecidos;
 //  - decodificador cego: o decodeFft do núcleo, que vasculha o espectro todo.
-// Nada aqui mede rádio, alcance ou energia: é simulação com dados reais.
-import { channelTable, compositeSignal, decodeFft, HPM10_F0, rfftMagnitudes } from '../protocol/h16'
+// O canal é emulado: nada aqui mede rádio, alcance ou energia.
+import { channelTable, compositeSignal, decodeFft } from '../protocol/h16'
 import { SERIES_ONS, SERIES_OPENAQ } from './config'
 import type { Observacao } from './tipos'
 
-export const QUADRO = { f0: HPM10_F0, sampleRate: 131072, duration: 1 / 64, n: 2048, thresholdDb: -40 } as const
-export const DF = QUADRO.sampleRate / QUADRO.n // 64 Hz por bin
+export const PERFIL = 'HPM-D48'
+export const QUADRO = { f0: 6000, sampleRate: 48000, duration: 480 / 48000, n: 480, thresholdDb: -40 } as const
+export const DF = QUADRO.sampleRate / QUADRO.n // 100 Hz por bin
 export const SNR_OPERACIONAL_DB = 20
 export const LIMIAR_PRESENCA = 0.05 // metade do piso de amplitude (0,10)
 const CANAIS = channelTable(QUADRO.f0)
+export const BINS = CANAIS.map((c) => (c.frequency_hz * QUADRO.n) / QUADRO.sampleRate)
+
+// Fases de Schroeder: espalham os picos dos 12 tons e reduzem o fator de crista.
+export const FASES = CANAIS.map((_, i) => (-Math.PI * i * (i + 1)) / CANAIS.length)
+// Escala fixa: 12 canais com amplitude máxima 1 somam no máximo 12; o pico fica
+// em -1 dBFS mesmo no pior caso, logo o PCM transmitido nunca satura.
+export const ESCALA_PCM = 10 ** (-1 / 20) / CANAIS.length
+const PCM_MAX = 32767
 
 // Faixas declaradas por parâmetro e unidade. Fora delas, satura e marca clipped.
 export const FAIXAS: Record<string, { unidade: string; min: number; max: number }> = {
@@ -59,27 +73,53 @@ export function sementeDe(texto: string): number {
   return h >>> 0
 }
 
-const binDe = (f: number) => Math.round(f / DF)
-// Ganho de cada canal: magnitude no bin para amplitude 1, isolado (calibração).
-const GANHO = CANAIS.map((c) =>
-  rfftMagnitudes(compositeSignal(QUADRO.f0, [{ a: c.a, b: c.b, amplitude: 1 }], QUADRO.duration, QUADRO.sampleRate))[binDe(c.frequency_hz)])
-
-// amplitudes[i] = amplitude do canal i+1, ou null se ausente.
-export function transmitir(amplitudes: (number | null)[], snrDb: number, semente: number) {
-  const harm = CANAIS.flatMap((c, i) => (amplitudes[i] == null ? [] : [{ a: c.a, b: c.b, amplitude: amplitudes[i]! }]))
+// Quadro transmitido em PCM de 16 bits. amplitudes[i] = amplitude do canal i+1, ou null se ausente.
+export function quadroPcm(amplitudes: (number | null)[]) {
+  const harm = CANAIS.flatMap((c, i) => (amplitudes[i] == null ? [] : [{ a: c.a, b: c.b, amplitude: amplitudes[i]!, phase: FASES[i] }]))
   const s = compositeSignal(QUADRO.f0, harm, QUADRO.duration, QUADRO.sampleRate)
+  const pcm = new Int16Array(s.length)
+  let clipping = 0, pico = 0, energia = 0
+  for (let i = 0; i < s.length; i++) {
+    const v = Math.round(s[i] * ESCALA_PCM * PCM_MAX)
+    if (Math.abs(v) > PCM_MAX) clipping++
+    pcm[i] = Math.max(-PCM_MAX, Math.min(PCM_MAX, v))
+    pico = Math.max(pico, Math.abs(pcm[i])); energia += pcm[i] * pcm[i]
+  }
+  const rms = Math.sqrt(energia / pcm.length)
+  return { pcm, clipping, picoDbfs: pico > 0 ? 20 * Math.log10(pico / PCM_MAX) : null, fatorCristaDb: rms > 0 ? 20 * Math.log10(pico / rms) : null }
+}
+
+// Canal emulado: soma ruído gaussiano ao PCM e devolve o quadro recebido em escala [-1, 1].
+export function transmitir(amplitudes: (number | null)[], snrDb: number, semente: number) {
+  const tx = quadroPcm(amplitudes)
+  const s = Float64Array.from(tx.pcm, (v) => v / PCM_MAX)
   const ps = s.reduce((a, v) => a + v * v, 0) / s.length
   const sigma = Math.sqrt(ps / 10 ** (snrDb / 10))
   const g = prng(semente)
-  let pn = 0
-  const y = s.map((v) => { const n = sigma * g.normal(); pn += n * n; return v + n })
-  return { y, snrMedidoDb: ps > 0 && pn > 0 ? 10 * Math.log10(ps / (pn / s.length)) : null }
+  let pn = 0, clippingRx = 0
+  const y = s.map((v) => {
+    const n = sigma * g.normal(); pn += n * n
+    const r = v + n
+    if (Math.abs(r) > 1) clippingRx++
+    return Math.max(-1, Math.min(1, r))
+  })
+  return { y, snrMedidoDb: ps > 0 && pn > 0 ? 10 * Math.log10(ps / (pn / s.length)) : null,
+    clippingTx: tx.clipping, clippingRx, picoDbfs: tx.picoDbfs, fatorCristaDb: tx.fatorCristaDb }
 }
 
+// Goertzel: magnitude de um único bin k da DFT de y, em O(N).
+export function goertzel(y: ArrayLike<number>, k: number): number {
+  const w = (2 * Math.PI * k) / y.length, c = 2 * Math.cos(w)
+  let s1 = 0, s2 = 0
+  for (let i = 0; i < y.length; i++) { const s0 = y[i] + c * s1 - s2; s2 = s1; s1 = s0 }
+  const re = s1 - s2 * Math.cos(w), im = s2 * Math.sin(w)
+  return Math.hypot(re, im)
+}
+
+// Tom coerente de amplitude A num bin inteiro: |X[k]| = A·N/2. Sem calibração.
 export function receptorHpm(y: Float64Array) {
-  const mags = rfftMagnitudes(y)
   return CANAIS.map((c, i) => {
-    const amp = mags[binDe(c.frequency_hz)] / GANHO[i]
+    const amp = (2 * goertzel(y, BINS[i])) / QUADRO.n / ESCALA_PCM
     return { canal: c.id, razao: c.ratio, amplitude: amp, presente: amp >= LIMIAR_PRESENCA }
   })
 }
@@ -163,7 +203,7 @@ export function baselineMqtt(leituras: { chave: string; valor: number; unidade: 
   const q0 = total(2 + t), q1 = total(2 + t + 2)
   return { topico, payloadBytes: payload, publishQos0Bytes: q0, overheadQos0Bytes: q0 - payload,
     trocaQos1Bytes: q1 + 4, overheadQos1Bytes: q1 + 4 - payload,
-    vetorAmostrasFloat64Bytes: QUADRO.n * 8,
+    quadroPcmBytes: QUADRO.n * 2,
     exclui: 'TCP/IP, TLS, rádio, keepalive, retransmissões, sessão do broker e energia' }
 }
 
@@ -179,7 +219,8 @@ export function executarProtocolo(obs: Observacao[], slotIso: string) {
   })
   const semente = sementeDe(slotIso)
   const t0 = performance.now()
-  const { y, snrMedidoDb } = transmitir(canais.map((c) => c.amplitude), SNR_OPERACIONAL_DB, semente)
+  const tx = transmitir(canais.map((c) => c.amplitude), SNR_OPERACIONAL_DB, semente)
+  const { y, snrMedidoDb } = tx
   const rx = receptorHpm(y)
   const cego = decodificadorCego(y)
   const tempoMs = performance.now() - t0
@@ -200,7 +241,9 @@ export function executarProtocolo(obs: Observacao[], slotIso: string) {
     expectedChannels: canais.map((c) => ({ canal: c.canal, razao: c.razao, chave: c.chave, amplitude: c.amplitude, clipped: c.clipped })),
     decodedPeaks: { receptorHpm: recuperados, decodificadorCego: { canaisAchados: cego.achados.filter(Boolean).length, picosTotais: cego.picosTotais, falsos: cego.falsos } },
     metrics: {
-      quadro: { ...QUADRO, resolucaoHz: DF, valoresPorQuadro: canais.filter((c) => c.amplitude != null).length, valoresPorSegundoSimulado: canais.filter((c) => c.amplitude != null).length / QUADRO.duration },
+      quadro: { perfil: PERFIL, ...QUADRO, resolucaoHz: DF, binsInteiros: BINS.every((k) => Number.isInteger(k)),
+        receptor: 'Goertzel nos 12 bins conhecidos', pcmBits: 16, escalaPcm: ESCALA_PCM,
+        picoDbfs: tx.picoDbfs, fatorCristaDb: tx.fatorCristaDb, clippingTx: tx.clippingTx, clippingRx: tx.clippingRx, valoresPorQuadro: canais.filter((c) => c.amplitude != null).length, valoresPorSegundoSimulado: canais.filter((c) => c.amplitude != null).length / QUADRO.duration },
       execucao: { ...conta, recall: taxa(conta.tp, conta.fn), precisao: taxa(conta.tp, conta.fp),
         maeAmplitude: comErro.length ? comErro.reduce((a, r) => a + Math.abs(r.amplitudeRecebida - r.amplitudeEnviada!), 0) / comErro.length : null,
         tempoMs },

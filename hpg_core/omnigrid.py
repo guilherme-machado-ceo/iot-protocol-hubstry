@@ -38,17 +38,23 @@ def compute_hn(N: int = 16) -> Set[Fraction]:
 
 
 def cardinality_hn(N: int = 16) -> int:
-    """Compute |H_N| = Σ φ(b) for b = 1..N.
+    """Compute |H_N| for the rectangular definition used by compute_hn().
 
-    Uses Euler's totient function.
+    H_N contains every reduced fraction a/b with 1 <= a, b <= N. The pairs
+    with a < b and with a > b mirror each other, and 1/1 is counted once, so
+
+        |H_N| = 2 * sum(phi(b) for b = 1..N) - 1
+
+    where phi is Euler's totient function. For N=16, returns 159.
+    (The sum of phi alone, 80, counts only the fractions a/b <= 1.)
 
     Args:
-        N: Maximum denominator (default: 16).
+        N: Maximum numerator and denominator (default: 16).
 
     Returns:
-        Cardinality of H_N. For N=16, returns 80.
+        Cardinality of H_N, always equal to len(compute_hn(N)).
     """
-    return sum(euler_totient(b) for b in range(1, N + 1))
+    return 2 * sum(euler_totient(b) for b in range(1, N + 1)) - 1
 
 
 def omnigrid_2d(N: int = 16) -> List[Dict]:
