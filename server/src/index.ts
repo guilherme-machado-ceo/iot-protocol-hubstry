@@ -6,6 +6,7 @@ import swaggerUi from '@fastify/swagger-ui'
 import { healthRoutes } from './routes/health'
 import { harmonicRoutes } from './routes/harmonic'
 import { deviceRoutes } from './routes/devices'
+import { liveRoutes } from './routes/live'
 import { disconnectPrisma } from './db'
 
 const server = Fastify({
@@ -51,6 +52,7 @@ export async function build() {
         { name: 'health', description: 'Health and readiness endpoints' },
         { name: 'harmonic', description: 'Harmonic protocol simulation' },
         { name: 'devices', description: 'Device registration and management' },
+        { name: 'live', description: 'Nautam Live: dados públicos reais pelo protocolo HPM 1.0' },
       ],
     },
   })
@@ -59,12 +61,13 @@ export async function build() {
     routePrefix: '/docs',
   })
 
-  // Raiz leva à documentação interativa, em vez de 404.
-  server.get('/', { schema: { hide: true } }, async (_req, reply) => reply.redirect('/docs'))
+  // Raiz leva ao painel público do Nautam Live; a documentação segue em /docs.
+  server.get('/', { schema: { hide: true } }, async (_req, reply) => reply.redirect('/live'))
 
   await server.register(healthRoutes, { prefix: '/api' })
   await server.register(harmonicRoutes, { prefix: '/api/harmonic' })
   await server.register(deviceRoutes, { prefix: '/api/devices' })
+  await server.register(liveRoutes)
 
   return server
 }
