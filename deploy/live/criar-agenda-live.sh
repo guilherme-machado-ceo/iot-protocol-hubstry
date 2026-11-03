@@ -41,4 +41,6 @@ aws scheduler get-schedule --name nautam-live-production \
   --query '{Estado:State,Expressao:ScheduleExpression,Tentativas:Target.RetryPolicy.MaximumRetryAttempts}' --output table
 
 echo "== 4. Comando para o teste manual (uma execução agora):"
-echo "aws ecs run-task --cluster default --launch-type FARGATE --task-definition nautam-live --network-configuration 'awsvpcConfiguration={subnets=[$(echo "$SUBNETS" | jq -r 'join(",")')],securityGroups=[$SG],assignPublicIp=ENABLED}' --query 'tasks[0].taskArn' --output text"
+echo "aws ecs run-task --region sa-east-1 --cluster default --launch-type FARGATE --task-definition nautam-live --network-configuration 'awsvpcConfiguration={subnets=[$(echo "$SUBNETS" | jq -r 'join(",")')],securityGroups=[$SG],assignPublicIp=ENABLED}' --query 'tasks[0].taskArn' --output text"
+echo "== 5. Resultado (depois de ~2 min):"
+echo "aws logs tail /ecs/nautam-live --region sa-east-1 --since 10m --format short"
