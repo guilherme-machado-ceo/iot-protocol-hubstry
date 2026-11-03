@@ -92,3 +92,8 @@ dd { margin: 4px 0 0; max-width: 72ch; color: var(--suave); }
   .teses summary { font-size: 16px; }
   .corpo { padding-left: 0; }
 }
+
+#indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.grupo-titulo { font-size: 12px; color: var(--laranja); margin-bottom: 6px; }
+.grupo .indicadores { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rodape-indicadores { grid-column: 1 / -1; background: var(--painel); margin: 0; padding: 12px 16px; max-width: none; }

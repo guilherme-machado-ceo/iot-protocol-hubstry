@@ -13,6 +13,7 @@ const NOMES = {
 }
 const ESTADOS = { normal: 'ao vivo', desatualizado: 'desatualizado', falha: 'última execução falhou', sem_dados: 'sem dados', carregando: 'carregando…' }
 
+const TOLERANCIA = 0.02 // ±2% da faixa declarada
 const estado = { janela: '24h', serie: null, dados: null }
 const $ = (s) => document.querySelector(s)
 
@@ -62,16 +63,38 @@ function renderIndicadores(d) {
   const ex = p.metricas.execucao
   const q = p.metricas.quadro
   const menor = p.metricas.varredura.menorSnrTestadaDb
+  // Cobertura: quantas séries entraram no quadro e por que as outras ficaram fora.
+  const rx = p.canais.receptorHpm || []
+  const total = d.series.length
+  const semLeitura = rx.filter((r) => r.valorOriginal == null).length
+  const excluidas = p.metricas.excluidas || []
+  const saturadas = rx.filter((r) => r.clipped).length
+  const noQuadro = rx.filter((r) => r.amplitudeEnviada != null).length
+  // Fidelidade: erro de amplitude dividido pela escala útil (0,9) equivale ao erro relativo à faixa declarada.
+  const comValor = rx.filter((r) => r.amplitudeEnviada != null && r.presente)
+  const dentro = comValor.filter((r) => Math.abs(r.amplitudeRecebida - r.amplitudeEnviada) / 0.9 <= TOLERANCIA).length
+  const grupo = (titulo, ...itens) => el('div', { class: 'grupo' }, el('div', { class: 'grupo-titulo' }, titulo), el('div', { class: 'indicadores' }, ...itens))
   box.append(
-    indicador('Canais recuperados (recall)', pct(ex.recall), `${ex.tp} de ${ex.tp + ex.fn} leituras`, ex.recall >= 0.95 ? 'ok' : 'ruim'),
-    indicador('Precisão', pct(ex.precisao), `${ex.fp} falsos positivos`, ex.precisao >= 0.99 ? 'ok' : 'ruim'),
-    indicador('Erro médio de amplitude', num(ex.maeAmplitude, 4), 'escala 0,1 a 1,0'),
-    indicador('SNR medida', `${num(p.snrMedidoDb, 1)} dB`, `solicitada ${num(p.snrSolicitadoDb, 0)} dB`),
-    indicador('Menor SNR aprovada', menor.receptorHpm == null ? 'nenhuma' : `${menor.receptorHpm} dB`, `cego: ${menor.decodificadorCego == null ? 'nenhuma' : menor.decodificadorCego + ' dB'}`),
-    indicador('Leituras por quadro', String(q.valoresPorQuadro), `${num(q.valoresPorSegundoSimulado, 0)} valores/s simulados`),
+    grupo('Cobertura',
+      indicador('Séries no quadro', `${noQuadro} de ${total}`, `${semLeitura} sem leitura · ${excluidas.length} excluídas · ${saturadas} saturadas`, noQuadro === total ? 'ok' : 'ruim'),
+      indicador('Leituras por quadro', String(q.valoresPorQuadro), `${num(q.valoresPorSegundoSimulado, 0)} valores/s simulados`),
+    ),
+    grupo('Detecção de canais',
+      indicador('Canais detectados (recall)', pct(ex.recall), `${ex.tp} de ${ex.tp + ex.fn} canais ocupados`, ex.recall >= 0.95 ? 'ok' : 'ruim'),
+      indicador('Precisão da detecção', pct(ex.precisao), `${ex.fp} falsos positivos`, ex.precisao >= 0.99 ? 'ok' : 'ruim'),
+    ),
+    grupo('Fidelidade dos valores',
+      indicador(`Valores dentro de ±${num(TOLERANCIA * 100, 0)}% da faixa`, comValor.length ? `${dentro} de ${comValor.length}` : '—', 'erro relativo à faixa declarada da série', comValor.length && dentro === comValor.length ? 'ok' : 'ruim'),
+      indicador('Erro médio de amplitude', num(ex.maeAmplitude, 4), `≈ ${num((ex.maeAmplitude ?? 0) / 0.9 * 100, 2)}% da faixa`),
+    ),
+    grupo('Canal simulado',
+      indicador('SNR medida', `${num(p.snrMedidoDb, 1)} dB`, `solicitada ${num(p.snrSolicitadoDb, 0)} dB`),
+    ),
   )
   const cego = p.canais.decodificadorCego
-  $('#nota-execucao').textContent = `Execução de ${utc(p.slotUtc)} UTC, semente ${p.semente}. Na mesma execução, o decodificador cego encontrou ${cego.picosTotais} picos, dos quais ${cego.falsos} falsos.`
+  const motivos = excluidas.length ? ` Excluídas: ${excluidas.map((x) => `${x.chave} (${x.motivo})`).join('; ')}.` : ''
+  const sat = saturadas ? ` Saturadas (acima da faixa, valor recuperado limitado ao máximo): ${rx.filter((r) => r.clipped).map((r) => r.chave).join(', ')}.` : ''
+  $('#nota-execucao').textContent = `Execução de ${utc(p.slotUtc)} UTC, semente ${p.semente}. Detectar um canal não garante o valor exato; por isso a fidelidade é medida à parte. Na mesma execução, o decodificador cego encontrou ${cego.picosTotais} picos, dos quais ${cego.falsos} falsos.${motivos}${sat}`
 }
 
 function renderLeituras(d) {
@@ -115,10 +138,11 @@ function renderVarredura(d) {
       el('td', { class: 'num' }, num(l.decodificadorCego.falsosPorQuadro, 1)),
     ))
   }
+  const menor = v.menorSnrTestadaDb
   const viz = d.protocolo.metricas.vizinhos || []
-  $('#nota-varredura').textContent = viz.length
+  $('#nota-varredura').textContent = `Menor SNR aprovada: receptor HPM ${menor.receptorHpm == null ? 'nenhuma' : menor.receptorHpm + ' dB'}; decodificador cego ${menor.decodificadorCego == null ? 'nenhuma' : menor.decodificadorCego + ' dB'}. ` + (viz.length
     ? `Canais mais próximos: ${viz.map((p) => `${p.par} (${num(p.separacaoBins, 1)} bins, recall ${pct(p.recall)})`).join('; ')}. Um bin equivale a 64 Hz.`
-    : ''
+    : '')
 }
 
 function renderMqtt(d) {
@@ -127,12 +151,12 @@ function renderMqtt(d) {
   const m = d.protocolo && d.protocolo.mqtt
   if (!m) return
   box.append(
-    indicador('Conteúdo (JSON)', `${m.payloadBytes} B`, 'mesmas leituras do quadro'),
+    indicador('Conteúdo em JSON', `${m.payloadBytes} B`, 'mesmas leituras do quadro'),
     indicador('PUBLISH QoS 0', `${m.publishQos0Bytes} B`, `${m.overheadQos0Bytes} B de cabeçalho`),
     indicador('PUBLISH + PUBACK QoS 1', `${m.trocaQos1Bytes} B`, `${m.overheadQos1Bytes} B de cabeçalho`),
     indicador('Quadro Nautam (float64)', `${m.vetorAmostrasFloat64Bytes} B`, '2.048 amostras, sem compressão'),
   )
-  box.append(el('p', { class: 'nota', style: 'grid-column: 1 / -1; background: var(--painel); margin: 0; padding: 12px 16px; max-width: none' }, `Fora da conta: ${m.exclui}.`))
+  box.append(el('p', { class: 'nota rodape-indicadores' }, `Fora da conta: ${m.exclui}. As duas representações são diferentes (bytes de texto contra amostras de sinal), por isso estes números não sustentam conclusão de eficiência.`))
 }
 
 function renderSeletor(d) {

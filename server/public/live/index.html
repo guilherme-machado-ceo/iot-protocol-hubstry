@@ -20,7 +20,7 @@
 <main>
   <section class="abertura">
     <h1>Dados públicos reais, transmitidos por um protocolo harmônico, com as contas à mostra.</h1>
-    <p>A cada cinco minutos, o Nautam Live coleta leituras oficiais de qualidade do ar nos Estados Unidos e do balanço de energia do Brasil. Em seguida, codifica essas leituras em um único sinal composto pelo protocolo Nautam, aplica ruído controlado, decodifica o sinal e publica o que se recuperou, o que se perdeu e quanto custaria transmitir o mesmo conteúdo pelo MQTT (Message Queuing Telemetry Transport, transporte de telemetria por fila de mensagens), o protocolo de referência da IoT (Internet of Things, internet das coisas).</p>
+    <p>A cada cinco minutos, o Nautam Live coleta leituras oficiais de qualidade do ar nos Estados Unidos e do balanço de energia do Brasil. Em seguida, codifica essas leituras em um único sinal composto pelo protocolo Nautam, aplica ruído controlado, decodifica o sinal e publica o que se recuperou, o que se perdeu e o tamanho estimado da mesma mensagem no MQTT (Message Queuing Telemetry Transport, transporte de telemetria por fila de mensagens), o protocolo de referência da IoT (Internet of Things, internet das coisas).</p>
     <p class="declaracao" id="declaracao">simulação de sinal com dados reais; energia e interferência em campo não medidas</p>
   </section>
 
@@ -55,15 +55,15 @@
   </section>
 
   <section aria-labelledby="t-robustez">
-    <h2 id="t-robustez">Robustez ao ruído</h2>
-    <p class="nota">Varredura diária de SNR (Signal-to-Noise Ratio, relação sinal-ruído), com 20 repetições por nível. Quanto menor a SNR, mais ruidoso o canal. O critério de aprovação é recuperar ao menos 95% dos canais (<i>recall</i>) com no mínimo 99% de acertos entre os canais apontados (precisão).</p>
+    <h2 id="t-robustez">Robustez ao ruído em quadros sintéticos de referência</h2>
+    <p class="nota">Este ensaio não usa as leituras reais. Ele gera quadros sintéticos com amplitudes aleatórias e cada canal ocupado com probabilidade de 75%, para medir o receptor de forma independente dos dados do dia. A varredura testa vários níveis de SNR (Signal-to-Noise Ratio, relação sinal-ruído), com 20 repetições por nível. Quanto menor a SNR, mais ruidoso o canal. O critério de aprovação é recuperar ao menos 95% dos canais (<i>recall</i>) com no mínimo 99% de acertos entre os canais apontados (precisão).</p>
     <div class="tabela-rolagem"><table id="varredura"><thead><tr><th class="num">SNR (dB)</th><th class="num">Recall receptor HPM</th><th class="num">Precisão receptor HPM</th><th class="num">Falsos por quadro, decodificador cego</th></tr></thead><tbody></tbody></table></div>
     <p class="nota" id="nota-varredura"></p>
   </section>
 
   <section aria-labelledby="t-mqtt">
-    <h2 id="t-mqtt">Linha de base MQTT</h2>
-    <p class="nota">Tamanho, em bytes, de uma publicação MQTT 3.1.1 com exatamente as mesmas leituras. A comparação é de conteúdo, não de energia: o Nautam ocupa um quadro de espectro, o MQTT ocupa bytes em uma rede de pacotes.</p>
+    <h2 id="t-mqtt">Estimativa de tamanho de mensagem MQTT</h2>
+    <p class="nota">Tamanho calculado, em bytes, de uma publicação MQTT 3.1.1 com exatamente as mesmas leituras, sem contar o servidor intermediário (<i>broker</i>), a rede ou o rádio. É uma referência de tamanho de mensagem, não uma medida de custo de transmissão nem de eficiência de comunicação.</p>
     <div class="indicadores" id="mqtt"></div>
   </section>
 
@@ -83,7 +83,7 @@
     <details>
       <summary>Tese da qualidade do ar: um indicador de saúde pública em tempo quase real</summary>
       <div class="corpo">
-        <p>As séries de ar vêm de monitores oficiais da rede AirNow, mantida pela EPA (Environmental Protection Agency, Agência de Proteção Ambiental dos Estados Unidos), e chegam ao Nautam pela OpenAQ. A OpenAQ é uma plataforma sem fins lucrativos que agrega dados públicos de qualidade do ar de vários países. Os Estados Unidos entraram primeiro por um motivo técnico: na qualificação de 3 de novembro de 2026, nenhuma das 113 estações brasileiras disponíveis na OpenAQ cumpria os critérios de licença, propriedade institucional e atividade recente.</p>
+        <p>As séries de ar vêm de monitores oficiais da rede AirNow, mantida pela EPA (Environmental Protection Agency, Agência de Proteção Ambiental dos Estados Unidos), e chegam ao Nautam pela OpenAQ. A OpenAQ é uma plataforma sem fins lucrativos que agrega dados públicos de qualidade do ar de vários países. Os Estados Unidos entraram primeiro por um motivo técnico: na qualificação de 3 de novembro de 2026, nenhuma das 113 estações brasileiras disponíveis na OpenAQ cumpria os critérios de licença, propriedade institucional e atividade recente adotados nesta qualificação. Isso não significa ausência de medições brasileiras na plataforma, e sim que nenhuma delas passou por esse filtro.</p>
         <p>Quatro poluentes compõem a amostra. O PM2,5 reúne partículas com diâmetro de até 2,5 micrômetros, pequenas o bastante para chegar aos alvéolos pulmonares e à corrente sanguínea. O PM10 inclui partículas um pouco maiores, associadas a poeira, obras e vias sem pavimentação. O NO2 (dióxido de nitrogênio) é um marcador de combustão, sobretudo do tráfego. O O3 (ozônio troposférico) não é emitido diretamente: ele se forma pela reação do NO2 com compostos orgânicos voláteis sob luz solar, e por isso tende a atingir o pico à tarde.</p>
         <p>A tese central é que essas leituras, lidas em conjunto e com frequência horária, funcionam como um sinal precoce de risco sanitário e de ineficiência urbana. Um pico simultâneo de NO2 e PM2,5 indica, em geral, congestionamento ou queima localizada; ozônio alto com NO2 baixo sugere transporte regional de poluição.</p>
         <h3>Como cada ator da hélice pode usar</h3>
