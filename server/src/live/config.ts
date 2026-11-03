@@ -22,5 +22,8 @@ export const SERIES_ONS: { subsistema: string; coluna: string; parameter: string
 ]
 
 export const OPENAQ_BASE = 'https://api.openaq.org/v3'
-export const ONS_BASE = 'https://ons-aws-prod-opendata.s3.sa-east-1.amazonaws.com/dataset/balanco_energia_subsistema_ho'
+export const ONS_BUCKET = 'ons-aws-prod-opendata'
+export const ONS_PREFIXO = 'dataset/balanco_energia_subsistema_ho'
+// Endpoint global; se o S3 responder 301, o adaptador usa a região indicada.
+export const ONS_BASE = `https://${ONS_BUCKET}.s3.amazonaws.com/${ONS_PREFIXO}`
 export const TIMEOUT_MS = 15_000
