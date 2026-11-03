@@ -232,3 +232,14 @@ O MVP é uma demonstração de software. Ele não mede propagação de rádio, i
 - Internacional, "A condicional" (licença conferida por conjunto e estação): NOAA NDBC (boias, horária, até ~25 min após a hora) e USGS Water Data (rios, tempo real).
 - Previsão rotulada como `forecast_or_model`: ECMWF Open Data (CC BY 4.0, IFS 0,1° desde 20/10/2026).
 - Gratuito ou acessível NÃO equivale a licença de redistribuição comercial; fonte com licença não confirmada não entra no painel.
+
+### Requisito 12 — Condições reais da Hubstry
+
+**User Story:** Como fundador solo e bootstrap, quero que toda evolução do Nautam respeite as condições reais da Hubstry, para que nenhum agente proponha planos inexequíveis.
+
+#### Critérios de aceitação
+
+1. QUANDO qualquer agente propuser plano, spec, tarefa ou revisão ENTÃO a proposta DEVERÁ caber em `.kiro/steering/hubstry-condicoes-reais.md`.
+2. O sistema NÃO DEVERÁ depender de compra de hardware, bancada física, transmissão de rádio, contratação ou certificação paga nesta fase.
+3. O painel público de produção NÃO DEVERÁ exibir dados, formas de onda ou ruído sintéticos sem declarar isso; a meta é eliminá-los conforme `docs/planos/plano-nautam-digital-2026-11-03.md`.
+4. Toda entrega DEVERÁ declarar o custo incremental mensal estimado na AWS.
