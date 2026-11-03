@@ -3,6 +3,7 @@
 // e registra o resultado. Execuções concorrentes no mesmo slot não duplicam.
 import { coletarOpenAQ } from './openaq'
 import { coletarONS } from './ons'
+import { executarProtocolo } from './protocolo'
 import type { Fetch, Observacao, ResultadoFonte } from './tipos'
 
 export const MINUTOS_SLOT = 5
@@ -29,6 +30,7 @@ export interface Resumo {
   coletadas: number
   novas: number
   rejeitadas: { ref: string; motivo: string }[]
+  protocolo?: Record<string, unknown> | null
 }
 
 function slotOcupado(err: unknown): boolean {
@@ -64,16 +66,21 @@ export async function executar(
       : { count: 0 }
     const status = obs.length === 0 ? 'failed' : count === 0 ? 'no_new_data' : 'succeeded'
     const maisRecente = obs.reduce<Date | null>((m, o) => (!m || o.observedAt > m ? o.observedAt : m), null)
+    // E2: as leituras do slot (novas ou repetidas) passam pelo protocolo Nautam.
+    const protocolo = obs.length ? executarProtocolo(obs, slot.toISOString()) : null
 
     await db.liveRun.update({
       where: { id: runId },
       data: {
         status, newObservations: count, sourceObservedAt: maisRecente, completedAt: new Date(),
+        ...(protocolo ?? {}),
         errorCode: obs.length === 0 ? 'sem_dados' : null,
         errorDetail: rejeitadas.length ? JSON.stringify(rejeitadas).slice(0, 2000) : null,
       },
     })
-    return { ...base, status, runId, coletadas: obs.length, novas: count, rejeitadas }
+    const m = protocolo?.metrics
+    return { ...base, status, runId, coletadas: obs.length, novas: count, rejeitadas,
+      protocolo: m ? { recall: m.execucao.recall, precisao: m.execucao.precisao, maeAmplitude: m.execucao.maeAmplitude, snrMedidoDb: protocolo!.measuredSnrDb, menorSnrTestadaDb: m.varredura.menorSnrTestadaDb } : null }
   } catch (err) {
     await db.liveRun.update({
       where: { id: runId },
