@@ -189,3 +189,36 @@ O MVP é uma demonstração de software. Ele não mede propagação de rádio, i
 9.4. O MVP NÃO DEVE introduzir broker MQTT; a comparação MQTT será exclusivamente analítica.
 
 9.5. O MVP NÃO DEVE criar uma plataforma genérica de conectores; somente os adaptadores da Fonte_Inicial e da Fonte_Reserva serão especificados.
+### Requisito 10 — Padrão editorial e teses de uso do painel
+
+**História de usuário:** Como Guilherme (decisão de 03/11/2026), quero que o painel siga o dogma editorial da Hubstry e explique o que cada dado significa e para quem serve, para que gestores públicos, investidores, executivos (C-level), pesquisadores e cidadãos entendam o valor sem precisar de conhecimento técnico prévio.
+
+#### Critérios de aceitação
+
+10.1. O painel DEVE seguir o dogma editorial da Hubstry: toda sigla escrita por extenso entre parênteses na primeira ocorrência (sigla estrangeira com o original e a tradução em português); contexto mínimo para termos técnicos, jargões e marcas pouco conhecidas, em frases curtas, com no máximo uma explicação por frase.
+
+10.2. O tom DEVE ser de consultoria: analítico e teórico-expositivo, nunca hermético, sem sacrificar a legibilidade.
+
+10.3. Para cada família de dados (qualidade do ar; energia elétrica), o painel DEVE apresentar, em acordeões recolhíveis, uma tese curta com: (a) o que o dado mede, em linguagem simples; (b) o que ele significa; (c) como pode ser usado.
+
+10.4. O uso DEVE ser descrito por ator da hélice quíntupla de inovação (Carayannis e Campbell): Estado e decisores governamentais; setor privado, investidores e C-level de empresas; sociedade civil e cidadãos; academia e ciência; e meio ambiente, como quinta hélice que atravessa as demais.
+
+10.5. O painel DEVE apresentar, em acordeão próprio, a tese de OSINT (Open Source Intelligence, inteligência de fontes abertas) do Nautam Live: inteligência produzida exclusivamente a partir de dados abertos publicados por suas fontes para reutilização, com proveniência e licença verificáveis. A tese DEVE explicitar a fronteira ética e jurídica: nada de varredura de dispositivos ou redes, coleta de identificadores de terceiros ou dado pessoal (LGPD, Lei Geral de Proteção de Dados Pessoais), em coerência com o Requisito 9.2.
+
+10.6. As teses NÃO DEVEM atribuir ao Nautam resultados não medidos: valem as mesmas restrições do Requisito 5 e a declaração do Requisito 7.5.
+
+10.7. ONDE houver afirmação factual sobre a fonte ou o fenômeno, o painel DEVE citar a fonte com link.
+
+### Requisito 11 — Próximas fontes (backlog, fora do MVP)
+
+**História de usuário:** Como responsável pelo roadmap, quero registrar as fontes pesquisadas pela Luna em 03/11/2026, para ampliar o Nautam Live depois da E3 sem reabrir o escopo agora.
+
+#### Critérios de aceitação
+
+11.1. As próximas fontes candidatas, em ordem: CEMADEN (Centro Nacional de Monitoramento e Alertas de Desastres Naturais, pluviômetros); PNBOIA (Programa Nacional de Boias, Marinha do Brasil); SPTrans Olho Vivo (posição de ônibus em São Paulo). Em seguida: Rede SONDA (Sistema de Organização Nacional de Dados Ambientais, INPE; CC BY 4.0), ANA HidroWeb (Agência Nacional de Águas e Saneamento Básico), Agritempo, INPE Queimadas, Banco Central e ANP (Agência Nacional do Petróleo, Gás Natural e Biocombustíveis). Alerta Rio em trilha paralela de confirmação de acesso.
+
+11.2. Nenhuma fonte do backlog DEVE ser integrada antes de confirmar endpoint, autenticação, cota e licença de redistribuição, pelo mesmo critério fail-closed do Requisito 1.
+
+11.3. Cada nova fonte DEVE entrar por um adaptador pequeno no contrato `LiveSourceAdapter`, sem criar plataforma genérica de conectores (Requisito 9.5).
+
+11.4. O painel DEVE distinguir leituras de sensores físicos de indicadores estatísticos (por exemplo, Banco Central, ANP, ANTAQ), que não demonstram o mesmo tipo de capacidade.
