@@ -178,14 +178,14 @@ jobs:
       run: |
         echo "Validating license compliance..."
 
-        # Check LICENSE file exists and contains CC BY-NC-SA 4.0
+        # Check LICENSE file exists and contains the Business Source License 1.1
         if [ ! -f "LICENSE" ]; then
           echo "ERROR: LICENSE file not found"
           exit 1
         fi
 
-        if ! grep -q "Creative Commons Attribution-NonCommercial-ShareAlike 4.0" LICENSE; then
-          echo "ERROR: LICENSE file does not contain CC BY-NC-SA 4.0"
+        if ! grep -q "Business Source License 1.1" LICENSE; then
+          echo "ERROR: LICENSE file does not contain BSL 1.1"
           exit 1
         fi
 

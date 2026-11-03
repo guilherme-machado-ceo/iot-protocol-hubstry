@@ -59,7 +59,7 @@ jobs:
           - [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/v${{ steps.changelog.outputs.VERSION }}/CONTRIBUTING.md)
 
           ## License
-          This release is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+          This release is licensed under the Business Source License 1.1 (see LICENSE)
 
           **Copyright (c) 2025 Guilherme Gonçalves Machado**
         draft: false

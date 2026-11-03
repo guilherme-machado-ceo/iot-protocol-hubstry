@@ -4,7 +4,7 @@
 
 [![DOI: HPG 1.0](https://zenodo.org/badge/DOI/10.5281/zenodo.19056387.svg)](https://doi.org/10.5281/zenodo.19056387)
 [![DOI: HALE](https://zenodo.org/badge/DOI/10.5281/zenodo.18901934.svg)](https://doi.org/10.5281/zenodo.18901934)
-[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-lightgrey.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-nautam--iot-blue.svg)](https://guilherme-machado-ceo.github.io/nautam-iot-protocol-site/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](hale_core/)
 [![Hubstry](https://img.shields.io/badge/by-Hubstry%20Deep%20Tech-0E8A7A.svg)](https://hubstry.dev)
@@ -243,7 +243,16 @@ Este repositório faz parte do ecossistema Hubstry:
 
 ## Licença
 
-Este projeto está licenciado sob **CC BY 4.0**. Veja [LICENSE](LICENSE).
+O código-fonte deste projeto está licenciado sob a **Business Source License 1.1 (BSL 1.1, licença de código-fonte disponível)**. Veja [LICENSE](LICENSE).
+
+- Livre: ler, modificar, redistribuir, usar fora de produção e usar em pesquisa acadêmica, ensino ou avaliação pessoal sem fins comerciais.
+- Exige licença comercial: qualquer outro uso em produção, inclusive por empresas com fins lucrativos, como serviço hospedado ou embarcado em produtos. Contato: guilhermemachado.ceo@hubstry.dev.
+- Cada versão passa automaticamente para a Apache License 2.0 quatro anos após sua primeira publicação.
+- Versões publicadas antes de 03/11/2026 continuam disponíveis sob a licença com que foram publicadas.
+
+Copyright (c) 2024-2026 Guilherme Gonçalves Machado.
+
+Os papers abaixo mantêm suas próprias licenças (CC BY 4.0), que não alteram a licença do código.
 
 > **Nota sobre Paper 1:** A equação HALE é referenciada do paper
 > DOI: [10.5281/zenodo.18901934](https://doi.org/10.5281/zenodo.18901934) (CC BY 4.0)
