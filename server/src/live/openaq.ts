@@ -14,8 +14,8 @@ const Local = z.object({
   id: z.number(), locality: z.string().nullable().optional(),
   isMobile: z.boolean(), isMonitor: z.boolean(),
   provider: z.object({ name: z.string() }), owner: z.object({ name: z.string() }),
-  sensors: z.array(z.object({ id: z.number(), parameter: z.object({ name: z.string(), units: z.string() }) })),
-  licenses: z.array(z.object({ id: z.number(), dateTo: z.string().nullable() })).nullable().optional(),
+  sensors: z.array(z.object({ id: z.number(), parameter: z.object({ name: z.string(), units: z.string() }) })).max(200),
+  licenses: z.array(z.object({ id: z.number(), dateTo: z.string().nullable() })).max(50).nullable().optional(),
 })
 const Ultima = z.object({
   value: z.number(), sensorsId: z.number(),
@@ -53,7 +53,7 @@ export async function coletarOpenAQ(chave: string, f: Fetch = fetch, series = SE
       if (!ls.every((l) => l.commercialUseAllowed && l.redistributionAllowed)) {
         out.rejeitadas.push({ ref, motivo: 'licença sem uso comercial ou redistribuição' }); continue
       }
-      const ultimas = z.array(Ultima).parse((await getJson(f, chave, `/locations/${id}/latest`) as { results: unknown[] }).results)
+      const ultimas = z.array(Ultima).max(500).parse((await getJson(f, chave, `/locations/${id}/latest`) as { results: unknown[] }).results)
       for (const s of series.filter((x) => x.location === id)) {
         const sensor = local.sensors.find((x) => x.parameter.name === s.parameter)
         const leitura = sensor && ultimas.find((u) => u.sensorsId === sensor.id)
