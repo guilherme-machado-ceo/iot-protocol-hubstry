@@ -107,6 +107,21 @@ jobs:
           SECURITY_GROUPS: ${{ env.ECS_MIGRATE_SECURITY_GROUPS }}
         run: deploy/aws/run-migration.sh
 
+      # Nautam Live: registra a nova revisão do job de ingestão com a mesma imagem
+      # da API. A agenda (EventBridge Scheduler) aponta para a família sem revisão
+      # e usa sempre a mais recente; criar/ligar a agenda é feito fora do workflow.
+      - name: Registrar task definition do Nautam Live
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          EXECUTION_ROLE_ARN: ${{ env.ECS_EXECUTION_ROLE_ARN }}
+          TASK_ROLE_ARN: ${{ env.ECS_TASK_ROLE_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ env.DATABASE_URL_SECRET_ARN }}
+        run: |
+          export API_IMAGE="$REGISTRY/$ECR_API_REPO:api-$IMAGE_TAG"
+          envsubst < deploy/aws/live-taskdef.json > /tmp/live-taskdef.json
+          aws ecs register-task-definition --cli-input-json file:///tmp/live-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text
+
       - name: Atualizar serviço da API (ECS Express Mode)
         id: api_deploy
         uses: aws-actions/amazon-ecs-deploy-express-service@v1
