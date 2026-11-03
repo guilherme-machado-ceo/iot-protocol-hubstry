@@ -10,6 +10,7 @@ on:
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
       - 'hpg_core/**'
+      - 'deploy/aws/**'
       - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [ main ]
@@ -20,6 +21,7 @@ on:
       - 'requirements.txt'
       - 'constraints-dashboard.txt'
       - 'hpg_core/**'
+      - 'deploy/aws/**'
       - '.github/workflows/api-ci.yml'
 
 permissions:
@@ -73,6 +75,10 @@ jobs:
           python3 server/tests/fixtures/gerar_fixtures_h16.py
           git diff --exit-code server/tests/fixtures/h16-python.json \
             || { echo "::error::O núcleo Python mudou: regenere server/tests/fixtures/h16-python.json e revise o porte TypeScript."; exit 1; }
+
+      - name: Testes do script de snapshot por risco (aws simulado)
+        working-directory: .
+        run: bash deploy/aws/testes/testar-snapshot.sh
 
       - name: Typecheck, testes unitários e build
         run: |
@@ -169,6 +175,19 @@ jobs:
       - name: Build da imagem de migração
         run: docker build -f server/Dockerfile --target migrate -t nautam-migrate:ci server/
 
+      # A imagem de migração precisa funcionar sozinha: aplica as migrações
+      # num PostgreSQL limpo, na mesma rede Docker, como fará no ECS.
+      - name: Smoke test da imagem de migração
+        run: |
+          docker network create migra
+          docker run -d --name pg --network migra -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=nautam postgres:16-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U ci -d nautam && break; sleep 1; done
+          docker run --rm --network migra -e DATABASE_URL=postgresql://ci:ci@pg:5432/nautam nautam-migrate:ci
+          ESPERADAS=$(ls -d server/prisma/migrations/*/ | wc -l)
+          APLICADAS=$(docker exec pg psql -U ci -d nautam -tAc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL')
+          test "$APLICADAS" = "$ESPERADAS" \
+            || { echo "::error::a imagem de migração aplicou $APLICADAS de $ESPERADAS migrações"; exit 1; }
+
       - name: Build da imagem do dashboard
         run: docker build -f Dockerfile.dashboard -t nautam-dashboard:ci .
 
@@ -177,3 +196,29 @@ jobs:
           docker run -d --name dash -p 8501:8501 nautam-dashboard:ci
           for i in $(seq 1 40); do curl -sf localhost:8501/_stcore/health && break; sleep 2; done
           curl -sf localhost:8501/_stcore/health || (docker logs dash; exit 1)
+
+      # Varredura das imagens que vão para produção.
+      # Bloqueia só vulnerabilidades CRÍTICAS com correção disponível;
+      # as de severidade alta aparecem no relatório sem bloquear o merge.
+      - name: Varredura de vulnerabilidades das imagens (Trivy)
+        run: |
+          # Versão fixada e SHA-256 conferido contra o valor gravado aqui (não contra
+          # o arquivo de checksums do próprio release). Para atualizar, troque os dois.
+          TRIVY_VERSAO=0.76.1
+          TRIVY_SHA256=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+          curl -sfL -o /tmp/trivy.tgz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSAO}/trivy_${TRIVY_VERSAO}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  /tmp/trivy.tgz" | sha256sum -c -
+          sudo tar -xzf /tmp/trivy.tgz -C /usr/local/bin trivy
+          trivy --version
+          for img in nautam-api:ci nautam-migrate:ci nautam-dashboard:ci; do
+            echo "::group::$img (CRITICAL e HIGH, relatório)"
+            trivy image --quiet --ignore-unfixed --severity CRITICAL,HIGH --exit-code 0 "$img"
+            echo "::endgroup::"
+          done
+          falhou=0
+          for img in nautam-api:ci nautam-migrate:ci nautam-dashboard:ci; do
+            trivy image --quiet --ignore-unfixed --severity CRITICAL --exit-code 1 "$img" >/dev/null \
+              || { echo "::error::$img tem vulnerabilidade CRÍTICA com correção disponível"; falhou=1; }
+          done
+          exit $falhou

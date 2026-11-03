@@ -9,6 +9,11 @@ on:
         description: 'Publicar também o dashboard Streamlit no ECS (custo extra: 2ª tarefa Fargate)'
         type: boolean
         default: false
+      snapshot:
+        description: 'Snapshot do RDS antes da migração: auto (só se a migração for arriscada), sempre ou nunca'
+        type: choice
+        options: [auto, sempre, nunca]
+        default: auto
 
 concurrency:
   group: deploy-aws-production
@@ -38,6 +43,8 @@ jobs:
       IMAGE_TAG: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # histórico completo para comparar migrações com o último deploy
 
       - name: Credenciais AWS via OIDC (sem chave estática)
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,6 +66,16 @@ jobs:
             -t "$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG" server/
           docker push "$REGISTRY/$ECR_API_REPO:api-$IMAGE_TAG"
           docker push "$REGISTRY/$ECR_API_REPO:migrate-$IMAGE_TAG"
+
+      # Snapshot condicionado ao risco: só quando há migração destrutiva ou que
+      # reescreve dados desde o último deploy bem-sucedido (registrado no SSM).
+      - name: Snapshot do RDS se a migração for arriscada
+        id: snapshot
+        env:
+          MODO: ${{ inputs.snapshot }}
+          DB_INSTANCE_ID: ${{ vars.DB_INSTANCE_ID }}
+          PARAM_ULTIMO_DEPLOY: /nautam/production/ultimo-deploy
+        run: deploy/aws/snapshot-se-arriscado.sh
 
       - name: Registrar task definition da migração
         id: migrate_td
@@ -123,6 +140,13 @@ jobs:
             sleep 10
           done
           echo "::error::API não ficou pronta em $BASE_URL"; exit 1
+
+      - name: Registrar o commit implantado (referência para o próximo snapshot)
+        run: |
+          aws ssm put-parameter --name /nautam/production/ultimo-deploy --type String \
+            --value "${{ github.sha }}" --overwrite >/dev/null
+          echo "Último deploy: ${{ github.sha }} | snapshot pré-migração: ${{ steps.snapshot.outputs.snapshot }}"
+
 
       - name: Build e push — dashboard
         if: inputs.deploy_dashboard

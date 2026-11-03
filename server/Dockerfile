@@ -38,15 +38,19 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # ---------------------------------------------------------------------------
-# Migração: Prisma CLI + pasta de migrações. Não sobe servidor.
+# Migração: dependências de produção + só o Prisma CLI e seus engines.
+# Não leva o node_modules de build: ferramentas de teste e compilação
+# (vitest, tsx, esbuild, typescript) ficam fora da imagem.
 # ---------------------------------------------------------------------------
 FROM base AS migrate
 ENV NODE_ENV=production
-COPY --from=build /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
 COPY package.json ./
 USER node
-CMD ["npx", "--no-install", "prisma", "migrate", "deploy"]
+CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
 
 # ---------------------------------------------------------------------------
 # Runtime da API

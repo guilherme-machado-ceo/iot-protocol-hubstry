@@ -122,7 +122,9 @@ As permissões do papel ficam restritas a:
 
 - `ecr:GetAuthorizationToken` e push e pull somente nos repositórios `nautam/*`;
 - `ecs:RegisterTaskDefinition`, `ecs:RunTask`, `ecs:DescribeTasks` e as ações do Express Mode somente no cluster do Nautam;
-- `iam:PassRole` somente para os papéis de execução, de tarefa e de infraestrutura do ECS do Nautam.
+- `iam:PassRole` somente para os papéis de execução, de tarefa e de infraestrutura do ECS do Nautam;
+- `rds:CreateDBSnapshot`, `rds:AddTagsToResource` e `rds:DescribeDBSnapshots` somente na instância do Nautam;
+- `ssm:GetParameter` e `ssm:PutParameter` somente no parâmetro `/nautam/production/ultimo-deploy`.
 
 ## 8. Custos
 
@@ -148,6 +150,7 @@ Controles adotados:
 - Backup automatizado do RDS com retenção de 7 dias.
 - Proteção contra exclusão ativada no RDS.
 - Snapshot final obrigatório antes de qualquer exclusão do banco.
+- Snapshot pré-migração condicionado ao risco (`deploy/aws/snapshot-se-arriscado.sh`): o deploy compara as migrações com o último commit implantado, registrado no SSM Parameter Store. Só tira snapshot se houver operação destrutiva ou que reescreve dados (`DROP` de tabela, coluna, esquema, tipo, índice ou restrição; `TRUNCATE`; `DELETE`; `UPDATE` com ou sem aspas; mudança de tipo; `SET NOT NULL`; renomeação). Migrações só aditivas seguem sem snapshot. O disparo manual aceita `auto`, `sempre` ou `nunca`. O script falha fechado: só a ausência do parâmetro (`ParameterNotFound`) conta como primeiro deploy, e acesso negado ou falha de rede ao ler o SSM interrompem o deploy. Migração já aplicada que tenha sido alterada, removida ou renomeada também interrompe, em qualquer modo: `sempre` e `nunca` escolhem só se haverá snapshot, sem contornar essa verificação. Se o commit do último deploy não estiver no histórico, a verificação é impossível e o deploy para. Os casos são testados no CI por `deploy/aws/testes/testar-snapshot.sh`, com um `aws` simulado.
 - Serviços ECS, Amplify e workflow podem ser desligados isoladamente, sem afetar Vercel e Streamlit Cloud.
 - O banco é o único componente cuja exclusão destrói dados, e por isso só é removido depois do snapshot final.
 
@@ -197,6 +200,7 @@ O HSL e a rotação de chaves por LFSR (Linear Feedback Shift Register) do proto
 | `ECS_DASHBOARD_SECURITY_GROUPS` | security group do dashboard |
 | `ECS_MIGRATE_SECURITY_GROUPS` | security group da migração |
 | `DATABASE_URL_SECRET_ARN` | ARN do segredo no Secrets Manager |
+| `DB_INSTANCE_ID` | identificador da instância RDS, para o snapshot pré-migração |
 | `CORS_ORIGIN` | domínio canônico do frontend |
 | `API_BASE_URL` | URL pública da API |
 
