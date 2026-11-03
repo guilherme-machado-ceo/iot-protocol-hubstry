@@ -222,3 +222,13 @@ O MVP é uma demonstração de software. Ele não mede propagação de rádio, i
 11.3. Cada nova fonte DEVE entrar por um adaptador pequeno no contrato `LiveSourceAdapter`, sem criar plataforma genérica de conectores (Requisito 9.5).
 
 11.4. O painel DEVE distinguir leituras de sensores físicos de indicadores estatísticos (por exemplo, Banco Central, ANP, ANTAQ), que não demonstram o mesmo tipo de capacidade.
+
+11.5. Cada série DEVE ser rotulada no banco e no painel por natureza: `physical_sensor` (sensor físico), `satellite_observation` (observação de satélite), `operational_series` (série operacional), `statistical_indicator` (indicador estatístico), `forecast_or_model` (previsão ou modelo) ou `historical_dataset` (histórico). No MVP: OpenAQ/AirNow = `physical_sensor`, cadência horária; ONS balanço = `operational_series`, horária, publicada com um a dois dias de atraso.
+
+11.6. Termos da OpenAQ: além da licença por localização, os termos da API hospedada restringem produtos que dupliquem substancialmente ou concorram com as ofertas da OpenAQ. O Nautam Live usa a API para testar um protocolo de codificação, não para redistribuir um catálogo de qualidade do ar; essa finalidade DEVE constar da página de fontes do painel, e o uso comercial futuro DEVE ser reavaliado contra esses termos.
+
+11.7. Fila de expansão aprovada em 03/11/2026 (pesquisa do Kiro, revisão da Luna), sem integração no ciclo E1–E3:
+- Brasil, com pedido formal de confirmação de licença antes de integrar: ANA HidroWeb/Hidrotelemetria, PNBOIA, CEMADEN; depois INPE Queimadas, INMET e Defesa Civil RS.
+- Internacional, "A condicional" (licença conferida por conjunto e estação): NOAA NDBC (boias, horária, até ~25 min após a hora) e USGS Water Data (rios, tempo real).
+- Previsão rotulada como `forecast_or_model`: ECMWF Open Data (CC BY 4.0, IFS 0,1° desde 20/10/2026).
+- Gratuito ou acessível NÃO equivale a licença de redistribuição comercial; fonte com licença não confirmada não entra no painel.
