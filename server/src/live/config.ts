@@ -27,3 +27,11 @@ export const ONS_PREFIXO = 'dataset/balanco_energia_subsistema_ho'
 // Endpoint global; se o S3 responder 301, o adaptador usa a região indicada.
 export const ONS_BASE = `https://${ONS_BUCKET}.s3.amazonaws.com/${ONS_PREFIXO}`
 export const TIMEOUT_MS = 15_000
+
+// Idade máxima de uma leitura para entrar no quadro e no painel (horas).
+// Ar: valores horários; 48 h toleram atrasos da agência. Energia: o ONS publica
+// com 1 a 2 dias de defasagem; 72 h toleram fins de semana.
+export const IDADE_MAXIMA_H: Record<'openaq' | 'ons', number> = { openaq: 48, ons: 72 }
+export function idadeHoras(observedAt: Date, agora: Date): number {
+  return (agora.getTime() - observedAt.getTime()) / 3_600_000
+}

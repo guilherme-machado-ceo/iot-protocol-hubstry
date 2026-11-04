@@ -34,6 +34,7 @@ function num(v, casas) {
 }
 function casasPara(unidade) { return unidade === 'ppm' ? 3 : unidade === 'MWmed' ? 0 : 1 }
 function pct(v) { return v == null ? '—' : `${num(v * 100, v === 1 ? 0 : 1)}%` }
+function idade(h) { return h < 1 ? 'há menos de 1 h' : h < 48 ? `há ${Math.round(h)} h` : `há ${Math.round(h / 24)} dias` }
 function utc(iso) { return iso ? new Date(iso).toISOString().slice(0, 16).replace('T', ' ') : '—' }
 function nomeSerie(chave, leitura) {
   const [prov, est, par] = chave.split(':')
@@ -115,7 +116,7 @@ function renderLeituras(d) {
       el('td', null, r ? el('span', { class: 'canal' }, `${r.canal} · ${r.razao}`) : '—'),
       el('td', { class: 'num' }, `${num(l.value, casas)} ${l.unit}`),
       el('td', { class: 'num' }, r && r.valorRecuperado != null ? `${num(r.valorRecuperado, casas)} ${l.unit}` : '—'),
-      el('td', null, utc(l.observedAt)),
+      el('td', null, utc(l.observedAt), l.idadeHoras != null ? el('div', { class: 'serie-meta' }, idade(l.idadeHoras)) : null),
       el('td', { class: 'fonte' }, el('a', { href: l.sourceUrl, rel: 'noopener' }, l.attribution), el('br'), el('a', { href: l.licenseUrl, rel: 'noopener' }, l.licenseName), el('br'), l.natureza),
     )
     const escolher = () => { estado.serie = l.chave; $('#sel-serie').value = l.chave; marcarLinha(); carregarSerie() }

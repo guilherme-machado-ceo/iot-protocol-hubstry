@@ -18,6 +18,9 @@ describe('normalização', () => {
     expect(normalizar(1, 'pm25', 'ppm')).toBeNull() // unidade errada não entra
     const n = normalizar(74019.45, 'carga', 'MWmed')!
     expect(desnormalizar(n.amplitude, 'carga')).toBeCloseTo(74019.45, 6)
+    // ruído abaixo do piso ou acima do teto não gera valor fora da faixa
+    expect(desnormalizar(0.09, 'geracao_solar')).toBe(0)
+    expect(desnormalizar(1.05, 'pm25')).toBe(250)
   })
 })
 

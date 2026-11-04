@@ -160,6 +160,15 @@ describe('job de ingestão', () => {
     expect(r.rejeitadas[0].motivo).toBe('OPENAQ_API_KEY ausente')
   })
 
+  it('leitura antiga demais (estação parada) não entra no quadro nem no banco', async () => {
+    const { db, obs } = bancoFalso()
+    const depois = new Date(AGORA.getTime() + 10 * 24 * 3_600_000) // as fixtures ficam com ~10 dias
+    const r = await executar(db, { agora: depois, chaveOpenAQ: 'k', f: fakeFetch(rotas) })
+    expect(r.coletadas).toBe(0)
+    expect(obs.size).toBe(0)
+    expect(r.rejeitadas.filter((x) => x.motivo.startsWith('leitura antiga'))).not.toHaveLength(0)
+  })
+
   it('nenhuma fonte responde: run termina como failed', async () => {
     const { db, runs } = bancoFalso()
     const r = await executar(db, { agora: AGORA, chaveOpenAQ: 'k', f: fakeFetch({}) })

@@ -56,9 +56,12 @@ export function normalizar(valor: number, parametro: string, unidade: string) {
   const clipped = x < 0 || x > 1
   return { amplitude: 0.1 + 0.9 * Math.min(1, Math.max(0, x)), clipped }
 }
+// O receptor conhece a faixa declarada: o valor recuperado fica limitado a ela,
+// assim o ruído não produz valores fisicamente impossíveis (ex.: carga negativa).
 export function desnormalizar(amplitude: number, parametro: string): number {
   const f = FAIXAS[parametro]
-  return f.min + ((amplitude - 0.1) / 0.9) * (f.max - f.min)
+  const x = Math.min(1, Math.max(0, (amplitude - 0.1) / 0.9))
+  return f.min + x * (f.max - f.min)
 }
 
 // PRNG determinístico (mulberry32) e normal padrão (Box-Muller).
