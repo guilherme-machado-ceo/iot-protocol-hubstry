@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../db'
 import { CHAVES_SERIES } from '../live/protocolo'
+import { IDADE_MAXIMA_H, idadeHoras } from '../live/config'
 
 export const DECLARACAO = 'simulação de sinal com dados reais; energia e interferência em campo não medidas'
 export const MINUTOS_DESATUALIZADO = 15
@@ -90,7 +91,11 @@ async function resumo() {
       select: { provider: true, stationRef: true, parameter: true, value: true, unit: true, observedAt: true, ingestedAt: true,
         locality: true, licenseName: true, licenseUrl: true, attribution: true, sourceUrl: true },
     })
-    return o ? { chave, ...o, natureza: NATUREZA[o.provider] } : null
+    if (!o) return null
+    const idade = idadeHoras(o.observedAt, new Date())
+    // Leitura antiga demais não aparece como atual no painel.
+    if (idade > IDADE_MAXIMA_H[o.provider as 'openaq' | 'ons']) return null
+    return { chave, ...o, idadeHoras: Math.round(idade * 10) / 10, natureza: NATUREZA[o.provider] }
   }))).filter(Boolean)
 
   const referencia = ultimaOk?.completedAt ?? null

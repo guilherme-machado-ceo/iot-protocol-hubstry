@@ -97,6 +97,15 @@ describe('GET /api/live/public', () => {
     expect(r.body).not.toMatch(/latitude|longitude|coordinates|errorDetail|stack/i)
   })
 
+  it('leitura antiga demais some da tabela; as demais trazem a idade em horas', async () => {
+    popular(3)
+    estado.obs[2] = { ...estado.obs[2], observedAt: new Date('2016-03-10T09:00:00Z') }
+    const d = (await app.inject('/api/live/public')).json()
+    expect(d.leituras).toHaveLength(11)
+    expect(d.leituras.find((l: any) => l.chave === CHAVES_SERIES[2])).toBeUndefined()
+    expect(d.leituras[0].idadeHoras).toBeCloseTo(1.5, 1)
+  })
+
   it('marca desatualizado quando a última execução ok tem mais de 15 minutos', async () => {
     popular(20)
     expect((await app.inject('/api/live/public')).json().estado).toBe('desatualizado')

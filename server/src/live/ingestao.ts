@@ -3,7 +3,8 @@
 // e registra o resultado. Execuções concorrentes no mesmo slot não duplicam.
 import { coletarOpenAQ } from './openaq'
 import { coletarONS } from './ons'
-import { executarProtocolo } from './protocolo'
+import { executarProtocolo, chaveDe } from './protocolo'
+import { IDADE_MAXIMA_H, idadeHoras } from './config'
 import type { Fetch, Observacao, ResultadoFonte } from './tipos'
 
 export const MINUTOS_SLOT = 5
@@ -59,8 +60,16 @@ export async function executar(
     else resultados.push({ fonte: 'openaq', observacoes: [], rejeitadas: [{ ref: 'openaq', motivo: 'OPENAQ_API_KEY ausente' }] })
     resultados.push(await coletarONS(f, opts.agora ?? new Date()))
 
-    const obs = resultados.flatMap((r) => r.observacoes)
+    const agora = opts.agora ?? new Date()
     const rejeitadas = resultados.flatMap((r) => r.rejeitadas)
+    // Leituras antigas demais não entram no quadro nem no banco (a fonte pode
+    // devolver a última medição de uma estação parada há anos).
+    const obs = resultados.flatMap((r) => r.observacoes).filter((o) => {
+      const h = idadeHoras(o.observedAt, agora)
+      if (h <= IDADE_MAXIMA_H[o.provider]) return true
+      rejeitadas.push({ ref: chaveDe(o), motivo: `leitura antiga: ${Math.round(h)} h (limite ${IDADE_MAXIMA_H[o.provider]} h)` })
+      return false
+    })
     const { count } = obs.length
       ? await db.liveObservation.createMany({ data: obs.map((o) => ({ ...o, firstRunId: runId })), skipDuplicates: true })
       : { count: 0 }
